@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -12,11 +11,14 @@ import (
 )
 
 func main() {
-	database.InitDB()
+	// Veritabanı dosyasının yolunu belirtin
+	if err := database.InitDB("forum.db"); err != nil {
+		log.Fatal("Failed to initialize database: ", err)
+	}
 	defer database.DB.Close()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", handlers.IndexHandler)
+	r.HandleFunc("/", handlers.HomeHandler)
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("GET", "POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
 	r.HandleFunc("/index", handlers.IndexHandler)
@@ -28,5 +30,5 @@ func main() {
 
 	log.Println("Server started on :8080")
 	http.Handle("/", r)
-	http.ListenAndServe(":8080", r)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

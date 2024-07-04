@@ -1,77 +1,81 @@
-// database/database.go
 package database
 
 import (
 	"database/sql"
+	"fmt"
+
+	"DytForum/models"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var DB *sql.DB
 
-func InitDB() {
+func InitDB(dataSourceName string) error {
 	var err error
-	DB, err = sql.Open("sqlite3", "./forum.db")
+	DB, err = sql.Open("sqlite3", dataSourceName)
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	createTables()
+	if err = DB.Ping(); err != nil {
+		return err
+	}
+	return createTables()
 }
 
-func createTables() {
-	createUsersTable := `
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE
-    );`
-
-	createThreadsTable := `
-    CREATE TABLE IF NOT EXISTS threads (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        category TEXT,
-        title TEXT,
-        content TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    );`
-
-	createCommentsTable := `
-    CREATE TABLE IF NOT EXISTS comments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        thread_id INTEGER NOT NULL,
-        user_id INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        FOREIGN KEY (thread_id) REFERENCES threads(id),
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    );`
-
-	createLikesTable := `
-    CREATE TABLE IF NOT EXISTS likes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        thread_id INTEGER,
-        user_id INTEGER,
-        like_status INTEGER,
-        FOREIGN KEY (thread_id) REFERENCES threads(id),
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    );`
-
-	_, err := DB.Exec(createUsersTable)
+func createTables() error {
+	usersTable := `
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		email TEXT NOT NULL UNIQUE,
+		username TEXT NOT NULL UNIQUE,
+		password TEXT NOT NULL
+	);
+	`
+	threadsTable := `
+	CREATE TABLE IF NOT EXISTS threads (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		title TEXT NOT NULL,
+		content TEXT NOT NULL,
+		category TEXT NOT NULL,
+		user_id INTEGER NOT NULL,
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	);
+	`
+	_, err := DB.Exec(usersTable)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error creating users table: %v", err)
 	}
-	_, err = DB.Exec(createThreadsTable)
+
+	_, err = DB.Exec(threadsTable)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error creating threads table: %v", err)
 	}
-	_, err = DB.Exec(createCommentsTable)
+
+	return nil
+}
+
+func GetUserByUsername(username string) (models.User, error) {
+	var user models.User
+	err := DB.QueryRow("SELECT id, email, username, password FROM users WHERE username = ?", username).Scan(&user.ID, &user.Email, &user.Username, &user.Password)
+	return user, err
+}
+
+func GetThreadsByUserID(userID int) ([]models.Thread, error) {
+	rows, err := DB.Query("SELECT id, title, content, category FROM threads WHERE user_id = ?", userID)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	_, err = DB.Exec(createLikesTable)
-	if err != nil {
-		panic(err)
+	defer rows.Close()
+
+	var threads []models.Thread
+	for rows.Next() {
+		var thread models.Thread
+		err := rows.Scan(&thread.ID, &thread.Title, &thread.Content, &thread.Category)
+		if err != nil {
+			return nil, err
+		}
+		threads = append(threads, thread)
 	}
+	return threads, nil
 }
