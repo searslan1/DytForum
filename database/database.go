@@ -42,12 +42,27 @@ func createTables() error {
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`
+	commentTable := `
+	CREATE TABLE IF NOT EXISTS comments (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		thread_id INTEGER,
+		content TEXT,
+		FOREIGN KEY(user_id) REFERENCES users(id),
+		FOREIGN KEY(thread_id) REFERENCES threads(id)
+	);
+	`
+
 	_, err := DB.Exec(usersTable)
 	if err != nil {
 		return fmt.Errorf("error creating users table: %v", err)
 	}
 
 	_, err = DB.Exec(threadsTable)
+	if err != nil {
+		return fmt.Errorf("error creating threads table: %v", err)
+	}
+	_, err = DB.Exec(commentTable)
 	if err != nil {
 		return fmt.Errorf("error creating threads table: %v", err)
 	}

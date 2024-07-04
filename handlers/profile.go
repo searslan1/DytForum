@@ -8,7 +8,7 @@ import (
 	"DytForum/models"
 )
 
-func ProfileHandler2(w http.ResponseWriter, r *http.Request) {
+func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session-name")
 	username, ok := session.Values["username"].(string)
 	if !ok {

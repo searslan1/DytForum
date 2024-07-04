@@ -25,11 +25,19 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
+		// E-posta adresinin zaten var olup olmadığını kontrol edin
+		var existingEmail string
+		err := database.DB.QueryRow("SELECT email FROM users WHERE email = ?", email).Scan(&existingEmail)
+		if err == nil {
+			http.Error(w, "Email address already in use", http.StatusBadRequest)
+			return
+		}
+
 		hash := sha256.New()
 		hash.Write([]byte(password))
 		hashedPassword := hex.EncodeToString(hash.Sum(nil))
 
-		_, err := database.DB.Exec("INSERT INTO users (email, username, password) VALUES (?, ?, ?)", email, username, hashedPassword)
+		_, err = database.DB.Exec("INSERT INTO users (email, username, password) VALUES (?, ?, ?)", email, username, hashedPassword)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -102,41 +110,6 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, struct {
 		Threads []models.Thread
 	}{
-		Threads: threads,
-	})
-}
-
-func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
-	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	username, ok := session.Values["username"].(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	user, err := database.GetUserByUsername(username)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	threads, err := database.GetThreadsByUserID(user.ID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
-	tmpl.Execute(w, struct {
-		User    models.User
-		Threads []models.Thread
-	}{
-		User:    user,
 		Threads: threads,
 	})
 }
