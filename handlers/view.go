@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"DytForum/database"
-
 	"DytForum/models"
 )
 
@@ -17,9 +16,9 @@ func ViewThreadsHandler(w http.ResponseWriter, r *http.Request) {
 	var rows *sql.Rows
 	var err error
 	if category != "" {
-		rows, err = database.DB.Query("SELECT id, title, content FROM threads WHERE category = ?", category)
+		rows, err = database.DB.Query("SELECT id, title, content, likes, dislikes FROM threads WHERE category = ?", category)
 	} else {
-		rows, err = database.DB.Query("SELECT id, title, content FROM threads")
+		rows, err = database.DB.Query("SELECT id, title, content, likes, dislikes FROM threads")
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -30,7 +29,7 @@ func ViewThreadsHandler(w http.ResponseWriter, r *http.Request) {
 	var threads []models.Thread
 	for rows.Next() {
 		var thread models.Thread
-		err := rows.Scan(&thread.ID, &thread.Title, &thread.Content)
+		err := rows.Scan(&thread.ID, &thread.Title, &thread.Content, &thread.Likes, &thread.Dislikes)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

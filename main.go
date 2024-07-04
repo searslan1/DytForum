@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	// Veritabanı dosyasının yolunu belirtin
 	if err := database.InitDB("forum.db"); err != nil {
 		log.Fatal("Failed to initialize database: ", err)
 	}
@@ -23,8 +22,14 @@ func main() {
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
 	r.HandleFunc("/index", handlers.IndexHandler)
 	r.HandleFunc("/create-thread", handlers.CreateThreadHandler).Methods("GET", "POST")
-	r.HandleFunc("/profile", handlers.ProfileHandler)
-	r.HandleFunc("/", handlers.ViewThreadsHandler).Methods("GET")
+	r.HandleFunc("/thread", handlers.ViewThreadHandler).Methods("GET")
+
+	// Use mux.HandleFunc for these endpoints
+	r.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
+	r.HandleFunc("/like-comment", handlers.LikeComment).Methods("POST")
+	r.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
+
+
 	fs := http.FileServer(http.Dir("./static"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 

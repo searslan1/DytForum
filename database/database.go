@@ -38,6 +38,8 @@ func createTables() error {
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
 		category TEXT NOT NULL,
+		likes INTEGER DEFAULT 0,
+    	dislikes INTEGER DEFAULT 0,
 		user_id INTEGER NOT NULL,
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
@@ -48,6 +50,8 @@ func createTables() error {
 		user_id INTEGER,
 		thread_id INTEGER,
 		content TEXT,
+		likes INTEGER DEFAULT 0,
+    	dislikes INTEGER DEFAULT 0,
 		FOREIGN KEY(user_id) REFERENCES users(id),
 		FOREIGN KEY(thread_id) REFERENCES threads(id)
 	);

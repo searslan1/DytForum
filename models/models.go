@@ -14,6 +14,10 @@ type Thread struct {
 	Category string
 	Title    string
 	Content  string
+	Likes     int
+	Dislikes  int
+	Username  string
+	Comments  []Comment
 }
 
 type Comment struct {
@@ -21,7 +25,10 @@ type Comment struct {
 	ThreadID    int
 	UserID      int
 	Content     string
-	ThreadTitle string
+	ThreadTitle string // gerekli mi bu ?
+	Likes    int
+	Dislikes int
+	Username string
 }
 
 type Like struct {
