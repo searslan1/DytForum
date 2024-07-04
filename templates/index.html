@@ -1,0 +1,43 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - Forum</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <section class="user-info-box">
+        <h1>Welcome to the Forum</h1>
+        <form method="post" action="/create-thread">
+            <input type="text" name="title" placeholder="Thread Title" required>
+            <textarea name="content" placeholder="Thread Content" required></textarea>
+            <select name="category" required>
+                <option value="Technology">Technology</option>
+                <option value="Health">Health</option>
+                <option value="Science">Science</option>
+            </select>
+            <button type="submit">Create Thread</button>
+        </form>
+        <a href="/profile">Profile</a> <!-- Profile link -->
+    </section>
+    <section class="threads-list-box">
+        <h2>Threads</h2>
+        <form action="/index" method="get">
+            <label for="category">Filter by Category:</label>
+            <select name="category" id="category">
+                <option value="">All Categories</option>
+                <option value="Technology">Technology</option>
+                <option value="Health">Health</option>
+                <option value="Science">Science</option>
+            </select>
+            <button type="submit">Apply Filters</button>
+        </form>
+        <ul>
+            {{range .Threads}}
+            <li><a href="/thread?id={{.ID}}">{{.Title}}</a> - {{.Content}}</li>
+            {{end}}
+        </ul>
+    </section>
+</body>
+</html>

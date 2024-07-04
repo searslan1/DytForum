@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Username}}'s Profile</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{.Username}}'s Profile</h1>
+    </header>
+    <section class="profile">
+        <h2>Threads Created</h2>
+        <ul>
+            {{range .Threads}}
+            <li>
+                <h3>{{.Title}}</h3>
+                <p>{{.Content}}</p>
+            </li>
+            {{end}}
+        </ul>
+        <h2>Comments</h2>
+        <ul>
+            {{range .Comments}}
+            <li>
+                <p>{{.Content}} - on thread {{.ThreadTitle}}</p>
+            </li>
+            {{end}}
+        </ul>
+    </section>
+</body>
+</html>
