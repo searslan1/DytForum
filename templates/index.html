@@ -12,13 +12,16 @@
         <form method="post" action="/create-thread">
             <input type="text" name="title" placeholder="Thread Title" required>
             <textarea name="content" placeholder="Thread Content" required></textarea>
-            <select name="category" required>
-                <option value="Technology">Technology</option>
-                <option value="Health">Health</option>
-                <option value="Science">Science</option>
+            <select id="category" name="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Genel">Genel</option>
+                <option value="Kilo Verme">Kilo Verme</option>
+                <option value="Kilo Alma">Kilo Alma</option>
+                <option value="Hastalıklarda Beslenme">Hastalıklarda Beslenme</option>
+                <option value="Sporda Beslenme">Sporda Beslenme</option>
             </select>
-            <button type="submit">Create Thread</button>
-        </form>
+        </div>
+        <div>
         <a href="/profile">Profile</a> <!-- Profile link -->
     </section>
     <section class="threads-list-box">
@@ -27,9 +30,11 @@
             <label for="category">Filter by Category:</label>
             <select name="category" id="category">
                 <option value="">All Categories</option>
-                <option value="Technology">Technology</option>
-                <option value="Health">Health</option>
-                <option value="Science">Science</option>
+                <option value="Genel">Genel</option>
+                <option value="Kilo Verme">Kilo Verme</option>
+                <option value="Kilo Alma">Kilo Alma</option>
+                <option value="Hastalıklarda Beslenme">Hastalıklarda Beslenme</option>
+                <option value="Sporda Beslenme">Sporda Beslenme</option>
             </select>
             <button type="submit">Apply Filters</button>
         </form>
@@ -41,3 +46,5 @@
     </section>
 </body>
 </html>
+
+
