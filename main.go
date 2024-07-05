@@ -23,15 +23,10 @@ func main() {
 	r.HandleFunc("/index", handlers.IndexHandler)
 	r.HandleFunc("/create-thread", handlers.CreateThreadHandler).Methods("GET", "POST")
 	r.HandleFunc("/thread", handlers.ViewThreadHandler).Methods("GET")
-	r.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
-	r.HandleFunc("/logout", handlers.LogoutHandler).Methods("GET")
-	
 
 	// Use mux.HandleFunc for these endpoints
 	r.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
-	r.HandleFunc("/like-comment", handlers.LikeComment).Methods("POST")
-	r.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
-
+	r.HandleFunc("/like-dislike-thread", handlers.LikeThread).Methods("POST")
 
 	fs := http.FileServer(http.Dir("./static"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
