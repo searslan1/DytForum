@@ -23,6 +23,9 @@ func main() {
 	r.HandleFunc("/index", handlers.IndexHandler)
 	r.HandleFunc("/create-thread", handlers.CreateThreadHandler).Methods("GET", "POST")
 	r.HandleFunc("/thread", handlers.ViewThreadHandler).Methods("GET")
+	r.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
+	r.HandleFunc("/logout", handlers.LogoutHandler).Methods("GET")
+	
 
 	// Use mux.HandleFunc for these endpoints
 	r.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")

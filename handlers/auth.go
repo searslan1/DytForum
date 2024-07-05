@@ -113,3 +113,15 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		Threads: threads,
 	})
 }
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session-name")
+
+	// Revoke user's authentication by clearing session values
+	session.Values["authenticated"] = false
+	session.Values["username"] = ""
+	session.Save(r, w)
+
+	// Redirect the user to the login page or any other appropriate page
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
