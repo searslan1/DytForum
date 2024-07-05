@@ -35,7 +35,6 @@ func createTables() error {
 	threadsTable := `
 	CREATE TABLE IF NOT EXISTS threads (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER,
 		category TEXT NOT NULL,
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
@@ -48,8 +47,8 @@ func createTables() error {
 	commentTable := `
 	CREATE TABLE IF NOT EXISTS comments (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		thread_id INTEGER,
-		user_id INTEGER,
+		thread_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
 		content TEXT,
 		likes INTEGER DEFAULT 0,
     	dislikes INTEGER DEFAULT 0,
