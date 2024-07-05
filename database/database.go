@@ -29,7 +29,7 @@ func createTables() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		username TEXT NOT NULL UNIQUE,
 		password TEXT NOT NULL,
-		email TEXT NOT NULL UNIQUE,
+		email TEXT NOT NULL UNIQUE
 	);
 	`
 	threadsTable := `
@@ -79,9 +79,12 @@ func createTables() error {
 	}
 	_, err = DB.Exec(commentTable)
 	if err != nil {
-		return fmt.Errorf("error creating threads table: %v", err)
+		return fmt.Errorf("error creating comments table: %v", err)
 	}
-
+	_, err = DB.Exec(likesTable)
+	if err != nil {
+		return fmt.Errorf("error creating likes table: %v", err)
+	}
 	return nil
 }
 
