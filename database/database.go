@@ -27,17 +27,18 @@ func createTables() error {
 	usersTable := `
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		email TEXT NOT NULL UNIQUE,
 		username TEXT NOT NULL UNIQUE,
-		password TEXT NOT NULL
+		password TEXT NOT NULL,
+		email TEXT NOT NULL UNIQUE,
 	);
 	`
 	threadsTable := `
 	CREATE TABLE IF NOT EXISTS threads (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		category TEXT NOT NULL,
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
-		category TEXT NOT NULL,
 		likes INTEGER DEFAULT 0,
     	dislikes INTEGER DEFAULT 0,
 		user_id INTEGER NOT NULL,
@@ -47,11 +48,22 @@ func createTables() error {
 	commentTable := `
 	CREATE TABLE IF NOT EXISTS comments (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER,
 		thread_id INTEGER,
+		user_id INTEGER,
 		content TEXT,
 		likes INTEGER DEFAULT 0,
     	dislikes INTEGER DEFAULT 0,
+		username TEXT,
+		FOREIGN KEY(user_id) REFERENCES users(id),
+		FOREIGN KEY(thread_id) REFERENCES threads(id)
+	);
+	`
+	likesTable := `
+	CREATE TABLE IF NOT EXISTS likes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		thread_id INTEGER,
+		user_id INTEGER,
+		like_status INTEGER,
 		FOREIGN KEY(user_id) REFERENCES users(id),
 		FOREIGN KEY(thread_id) REFERENCES threads(id)
 	);
