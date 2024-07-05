@@ -41,7 +41,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         // Insert comment into database
-        err = CreateComment(userID, threadID, comment)
+        err = CreateComment(userID, threadID, comment, username)
         if err != nil {
             http.Error(w, "Failed to create comment", http.StatusInternalServerError)
             return
@@ -55,8 +55,8 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func CreateComment(userID, threadID int, content string) error {
-    _, err := database.DB.Exec("INSERT INTO comments (user_id, thread_id, content) VALUES (?, ?, ?)", userID, threadID, content)
+func CreateComment(userID, threadID int, content string, username string) error {
+    _, err := database.DB.Exec("INSERT INTO comments (user_id, thread_id, content, username) VALUES (?, ?, ?, ?)", userID, threadID, content, username)
     if err != nil {
         return err
     }
