@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
@@ -19,7 +18,7 @@ var (
 	googleOauthConfig   *oauth2.Config
 	githubOauthConfig   *oauth2.Config
 	facebookOauthConfig *oauth2.Config
-	store               *sessions.CookieStore
+	//store               *sessions.CookieStore
 )
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {

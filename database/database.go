@@ -30,7 +30,7 @@ func createTables() error {
 		username TEXT NOT NULL UNIQUE,
 		password TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
-		facebook_id TEXT,
+		facebook_id TEXT
 	);
 	`
 	threadsTable := `
