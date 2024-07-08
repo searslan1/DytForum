@@ -14,10 +14,10 @@ type Thread struct {
 	Category string
 	Title    string
 	Content  string
-	Likes     int
-	Dislikes  int
-	Username  string
-	Comments  []Comment
+	Likes    int
+	Dislikes int
+	Username string
+	Comments []Comment
 }
 
 type Comment struct {
@@ -26,9 +26,9 @@ type Comment struct {
 	UserID      int
 	Content     string
 	ThreadTitle string // gerekli mi bu ?
-	Likes    int
-	Dislikes int
-	Username string
+	Likes       int
+	Dislikes    int
+	Username    string
 }
 
 type Like struct {
@@ -36,4 +36,21 @@ type Like struct {
 	ThreadID int
 	UserID   int
 	Like     int
+}
+type GoogleUserInfo struct {
+	ID    string
+	Name  string
+	Email string
+}
+
+type GitHubUserInfo struct {
+	ID    int
+	Login string
+	Email string
+}
+
+type FacebookUserInfo struct {
+	ID    string
+	Name  string
+	Email string
 }

@@ -11,6 +11,17 @@
         <a href="/logout">Logout</a>
     </header>
     <section class="profile">
+        <h2>Profile Information</h2>
+        {{if .GoogleUserInfo}}
+        <p>Google User: {{.GoogleUserInfo.Name}}</p>
+        {{end}}
+        {{if .GitHubUserInfo}}
+        <p>GitHub User: {{.GitHubUserInfo.Login}}</p>
+        {{end}}
+        {{if .FacebookUserInfo}}
+        <p>Facebook User: {{.FacebookUserInfo.Name}}</p>
+        {{end}}
+        
         <h2>Threads Created</h2>
         <ul>
             {{range .Threads}}

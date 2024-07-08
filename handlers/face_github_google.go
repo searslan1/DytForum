@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"DytForum/models"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
@@ -18,7 +21,7 @@ var (
 	googleOauthConfig   *oauth2.Config
 	githubOauthConfig   *oauth2.Config
 	facebookOauthConfig *oauth2.Config
-	//store               *sessions.CookieStore
+	// store               *sessions.CookieStore
 )
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
@@ -28,9 +31,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	log.Printf("Google callback code: %s", code)
 
-	// Exchange code for access token
 	token, err := googleOauthConfig.Exchange(r.Context(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange Google token", http.StatusInternalServerError)
@@ -38,21 +39,41 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Store token in session
+	client := googleOauthConfig.Client(r.Context(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		http.Error(w, "Failed to get Google user info", http.StatusInternalServerError)
+		log.Printf("Google user info error: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var googleUserInfo map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&googleUserInfo); err != nil {
+		http.Error(w, "Failed to decode Google user info", http.StatusInternalServerError)
+		log.Printf("Google user info decode error: %v", err)
+		return
+	}
+
+	user := models.GoogleUserInfo{
+		ID:    googleUserInfo["id"].(string),
+		Name:  googleUserInfo["name"].(string),
+		Email: googleUserInfo["email"].(string),
+	}
+
 	session, err := store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
 		return
 	}
-	session.Values["googleAccessToken"] = token.AccessToken
+	session.Values["googleUserInfo"] = user
 	if err := session.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		log.Printf("Session save error: %v", err)
 		return
 	}
 
-	// Redirect to profile page after successful login
 	http.Redirect(w, r, "/index", http.StatusSeeOther)
 }
 
@@ -114,30 +135,49 @@ func GitHubLogin(w http.ResponseWriter, r *http.Request) {
 
 func GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-	log.Printf("GitHub callback code: %s", code) // Log the received code
 
 	token, err := githubOauthConfig.Exchange(r.Context(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange GitHub token", http.StatusInternalServerError)
-		log.Printf("GitHub token exchange error: %v", err) // Log the error
+		log.Printf("GitHub token exchange error: %v", err)
 		return
 	}
 
-	// Store token in session
+	client := githubOauthConfig.Client(r.Context(), token)
+	resp, err := client.Get("https://api.github.com/user")
+	if err != nil {
+		http.Error(w, "Failed to get GitHub user info", http.StatusInternalServerError)
+		log.Printf("GitHub user info error: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var githubUserInfo map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&githubUserInfo); err != nil {
+		http.Error(w, "Failed to decode GitHub user info", http.StatusInternalServerError)
+		log.Printf("GitHub user info decode error: %v", err)
+		return
+	}
+
+	user := models.GitHubUserInfo{
+		ID:    int(githubUserInfo["id"].(float64)),
+		Login: githubUserInfo["login"].(string),
+		Email: githubUserInfo["email"].(string),
+	}
+
 	session, err := store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
-		log.Printf("Session error: %v", err) // Log the error
+		log.Printf("Session error: %v", err)
 		return
 	}
-	session.Values["githubAccessToken"] = token.AccessToken
+	session.Values["githubUserInfo"] = user
 	if err := session.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
-		log.Printf("Session save error: %v", err) // Log the error
+		log.Printf("Session save error: %v", err)
 		return
 	}
 
-	// Redirect to another endpoint after successful login
 	http.Redirect(w, r, "/index", http.StatusSeeOther)
 }
 
@@ -147,53 +187,56 @@ func FacebookLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func FacebookCallback(w http.ResponseWriter, r *http.Request) {
-	code := r.FormValue("code")
+	code := r.URL.Query().Get("code")
+
 	token, err := facebookOauthConfig.Exchange(r.Context(), code)
 	if err != nil {
+		http.Error(w, "Failed to exchange Facebook token", http.StatusInternalServerError)
 		log.Printf("Facebook token exchange error: %v", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	resp, err := http.Get(fmt.Sprintf("https://graph.facebook.com/me?access_token=%s&fields=id,name,email", token.AccessToken))
+	client := facebookOauthConfig.Client(r.Context(), token)
+	resp, err := client.Get("https://graph.facebook.com/me?fields=id,name,email")
 	if err != nil {
-		log.Printf("Get: %s\n", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Error(w, "Failed to get Facebook user info", http.StatusInternalServerError)
+		log.Printf("Facebook user info error: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	var user struct {
-		ID    string `json:"id"`
-		Name  string `json:"name"`
-		Email string `json:"email"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		log.Printf("Decode: %s\n", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	var facebookUserInfo map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&facebookUserInfo); err != nil {
+		http.Error(w, "Failed to decode Facebook user info", http.StatusInternalServerError)
+		log.Printf("Facebook user info decode error: %v", err)
 		return
 	}
 
-	// Store the user data in the session
+	user := models.FacebookUserInfo{
+		ID:    facebookUserInfo["id"].(string),
+		Name:  facebookUserInfo["name"].(string),
+		Email: facebookUserInfo["email"].(string),
+	}
+
 	session, err := store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
 		return
 	}
-	session.Values["user"] = user
+	session.Values["facebookUserInfo"] = user
 	if err := session.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		log.Printf("Session save error: %v", err)
 		return
 	}
 
-	// Redirect to profile page after successful login
-	http.Redirect(w, r, "/profile", http.StatusSeeOther)
+	http.Redirect(w, r, "/index", http.StatusSeeOther)
 }
 
 func init() {
+	gob.Register(models.User{})
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file %v", err)

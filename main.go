@@ -1,15 +1,24 @@
 package main
 
 import (
+	"encoding/gob"
 	"log"
 	"net/http"
 
 	"DytForum/database"
 	"DytForum/handlers"
+	"DytForum/models"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
+
+func init() {
+	// models paketinizdeki struct'ları gob'a kaydedin
+	gob.Register(models.GoogleUserInfo{})
+	gob.Register(models.GitHubUserInfo{})
+	gob.Register(models.FacebookUserInfo{})
+}
 
 func main() {
 	if err := database.InitDB("forum.db"); err != nil {
@@ -34,7 +43,7 @@ func main() {
 
 	// Protected endpoints
 	r.HandleFunc("/protected", handlers.ProtectedEndpoint)
-	r.HandleFunc("/profile", handlers.Profile)
+	r.HandleFunc("/profile", handlers.ProfileHandler)
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("GET", "POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
 	r.HandleFunc("/index", handlers.IndexHandler)

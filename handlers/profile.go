@@ -4,75 +4,71 @@ import (
 	"html/template"
 	"net/http"
 
-	"DytForum/database"
 	"DytForum/models"
 )
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
-	username, ok := session.Values["username"].(string)
-	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
-
-	var user models.User
-	err := database.DB.QueryRow("SELECT id, username FROM users WHERE username = ?", username).Scan(&user.ID, &user.Username)
+	session, err := store.Get(r, "session-name")
 	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
+		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		return
 	}
 
-	rows, err := database.DB.Query("SELECT id, title, content FROM threads WHERE user_id = ?", user.ID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	googleUserInfo, googleOk := session.Values["googleUserInfo"].(models.GoogleUserInfo)
+	githubUserInfo, githubOk := session.Values["githubUserInfo"].(models.GitHubUserInfo)
+	facebookUserInfo, facebookOk := session.Values["facebookUserInfo"].(models.FacebookUserInfo)
+
+	var username string
+	if googleOk {
+		username = googleUserInfo.Name
+	} else if githubOk {
+		username = githubUserInfo.Login
+	} else if facebookOk {
+		username = facebookUserInfo.Name
+	} else {
+		http.Error(w, "User not logged in", http.StatusUnauthorized)
 		return
-	}
-	defer rows.Close()
-
-	var threads []models.Thread
-	for rows.Next() {
-		var thread models.Thread
-		err := rows.Scan(&thread.ID, &thread.Title, &thread.Content)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		threads = append(threads, thread)
-	}
-
-	rows, err = database.DB.Query(`
-		SELECT c.id, c.content, t.title 
-		FROM comments c 
-		JOIN threads t ON c.thread_id = t.id 
-		WHERE c.user_id = ?`, user.ID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	var comments []models.Comment
-	for rows.Next() {
-		var comment models.Comment
-		err := rows.Scan(&comment.ID, &comment.Content, &comment.ThreadTitle)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		comments = append(comments, comment)
 	}
 
 	data := struct {
-		Username string
-		Threads  []models.Thread
-		Comments []models.Comment
+		Username         string
+		GoogleUserInfo   models.GoogleUserInfo
+		GitHubUserInfo   models.GitHubUserInfo
+		FacebookUserInfo models.FacebookUserInfo
+		Threads          []models.Thread
+		Comments         []models.Comment
 	}{
-		Username: user.Username,
-		Threads:  threads,
-		Comments: comments,
+		Username:         username,
+		GoogleUserInfo:   googleUserInfo,
+		GitHubUserInfo:   githubUserInfo,
+		FacebookUserInfo: facebookUserInfo,
+		Threads:          getThreadsByUser(username),
+		Comments:         getCommentsByUser(username),
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/profile.html"))
+	tmpl, err := template.ParseFiles("templates/profile.html")
+	if err != nil {
+		http.Error(w, "Failed to parse template", http.StatusInternalServerError)
+		return
+	}
+
 	tmpl.Execute(w, data)
+}
+
+func getThreadsByUser(username string) []models.Thread {
+	// Veritabanından kullanıcıya ait thread'leri çekmek için gerekli işlemleri yapın
+	// Bu örnekte, boş bir slice döndürüyoruz
+	return []models.Thread{
+		{Title: "Thread 1", Content: "Content of thread 1"},
+		{Title: "Thread 2", Content: "Content of thread 2"},
+	}
+}
+
+func getCommentsByUser(username string) []models.Comment {
+	// Veritabanından kullanıcıya ait yorumları çekmek için gerekli işlemleri yapın
+	// Bu örnekte, boş bir slice döndürüyoruz
+	return []models.Comment{
+		{Content: "Comment 1", ThreadTitle: "Thread 1"},
+		{Content: "Comment 2", ThreadTitle: "Thread 2"},
+	}
 }
