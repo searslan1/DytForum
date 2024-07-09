@@ -29,6 +29,9 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not logged in", http.StatusUnauthorized)
 		return
 	}
+	// Kullanıcının thread'lerini ve yorumlarını al
+	threads := getThreadsByUser(username)
+	comments := getCommentsByUser(username)
 
 	data := struct {
 		Username         string
@@ -42,8 +45,8 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		GoogleUserInfo:   googleUserInfo,
 		GitHubUserInfo:   githubUserInfo,
 		FacebookUserInfo: facebookUserInfo,
-		Threads:          getThreadsByUser(username),
-		Comments:         getCommentsByUser(username),
+		Threads:          threads,
+		Comments:         comments,
 	}
 
 	tmpl, err := template.ParseFiles("templates/profile.html")
@@ -53,22 +56,4 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl.Execute(w, data)
-}
-
-func getThreadsByUser(username string) []models.Thread {
-	// Veritabanından kullanıcıya ait thread'leri çekmek için gerekli işlemleri yapın
-	// Bu örnekte, boş bir slice döndürüyoruz
-	return []models.Thread{
-		{Title: "Thread 1", Content: "Content of thread 1"},
-		{Title: "Thread 2", Content: "Content of thread 2"},
-	}
-}
-
-func getCommentsByUser(username string) []models.Comment {
-	// Veritabanından kullanıcıya ait yorumları çekmek için gerekli işlemleri yapın
-	// Bu örnekte, boş bir slice döndürüyoruz
-	return []models.Comment{
-		{Content: "Comment 1", ThreadTitle: "Thread 1"},
-		{Content: "Comment 2", ThreadTitle: "Thread 2"},
-	}
 }
