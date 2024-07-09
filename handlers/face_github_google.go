@@ -56,7 +56,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.GoogleUserInfo{
-		ID:    googleUserInfo["id"].(string),
 		Name:  googleUserInfo["name"].(string),
 		Email: googleUserInfo["email"].(string),
 	}
@@ -75,10 +74,11 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// OAuth ile giriş yapan kullanıcılar için INSERT işlemi
-	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')`, user.Name, user.Email)
+	// Kullanıcıyı veritabanında kontrol et ve ekle/güncelle
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')
+                               ON CONFLICT(email) DO UPDATE SET username=excluded.username`, user.Name, user.Email)
 	if err != nil {
-		log.Fatalf("Failed to insert user: %v", err)
+		http.Error(w, "Failed to insert/update user", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
 		return
 	}
@@ -173,7 +173,6 @@ func GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.GitHubUserInfo{
-		ID:    int(githubUserInfo["id"].(float64)),
 		Login: githubUserInfo["login"].(string),
 		Email: "",
 	}
@@ -194,10 +193,11 @@ func GitHubCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// OAuth ile giriş yapan kullanıcılar için INSERT işlemi
-	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')`, user.Login, user.Email)
+	// Kullanıcıyı veritabanında kontrol et ve ekle/güncelle
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')
+                               ON CONFLICT(email) DO UPDATE SET username=excluded.username`, user.Login, user.Email)
 	if err != nil {
-		log.Fatalf("Failed to insert user: %v", err)
+		http.Error(w, "Failed to insert/update user", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
 		return
 	}
@@ -236,7 +236,6 @@ func FacebookCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.FacebookUserInfo{
-		ID:    facebookUserInfo["id"].(string),
 		Name:  facebookUserInfo["name"].(string),
 		Email: facebookUserInfo["email"].(string),
 	}
@@ -255,9 +254,11 @@ func FacebookCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')`, user.Name, user.Email)
+	// Kullanıcıyı veritabanında kontrol et ve ekle/güncelle
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')
+                               ON CONFLICT(email) DO UPDATE SET username=excluded.username`, user.Name, user.Email)
 	if err != nil {
-		log.Fatalf("Failed to insert user: %v", err)
+		http.Error(w, "Failed to insert/update user", http.StatusInternalServerError)
 		log.Printf("Database error: %v", err)
 		return
 	}

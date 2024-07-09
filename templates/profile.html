@@ -2,43 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{.Username}}'s Profile</title>
+    <title>Profile</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1>{{.Username}}'s Profile</h1>
-        <a href="/logout">Logout</a>
+        <h1>Welcome, {{.Username}}!</h1>
     </header>
     <section class="profile">
-        <h2>Profile Information</h2>
-        {{if .GoogleUserInfo}}
-        <p>Google User: {{.GoogleUserInfo.Name}}</p>
+        <h2>Your Threads</h2>
+        {{if .Threads}}
+            <ul>
+                {{range .Threads}}
+                    <li>
+                        <h3>{{.Title}}</h3>
+                        <p>{{.Content}}</p>
+                        <p><strong>Likes:</strong> {{.Likes}} | <strong>Dislikes:</strong> {{.Dislikes}}</p>
+                        <p><strong>Category:</strong> {{.Category}}</p>
+                    </li>
+                {{end}}
+            </ul>
+        {{else}}
+            <p>No threads found.</p>
         {{end}}
-        {{if .GitHubUserInfo}}
-        <p>GitHub User: {{.GitHubUserInfo.Login}}</p>
+
+        <h2>Your Comments</h2>
+        {{if .Comments}}
+            <ul>
+                {{range .Comments}}
+                    <li>
+                        <p><strong>Thread ID:</strong> {{.ThreadID}}</p>
+                        <p>{{.Content}}</p>
+                    </li>
+                {{end}}
+            </ul>
+        {{else}}
+            <p>No comments found.</p>
         {{end}}
-        {{if .FacebookUserInfo}}
-        <p>Facebook User: {{.FacebookUserInfo.Name}}</p>
-        {{end}}
-        
-        <h2>Threads Created</h2>
-        <ul>
-            {{range .Threads}}
-            <li>
-                <h3>{{.Title}}</h3>
-                <p>{{.Content}}</p>
-            </li>
-            {{end}}
-        </ul>
-        <h2>Comments</h2>
-        <ul>
-            {{range .Comments}}
-            <li>
-                <p>{{.Content}} - on thread {{.ThreadTitle}}</p>
-            </li>
-            {{end}}
-        </ul>
     </section>
 </body>
 </html>
