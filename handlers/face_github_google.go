@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"DytForum/database"
 	"DytForum/models"
 
 	"github.com/joho/godotenv"
@@ -31,7 +32,6 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-
 	token, err := googleOauthConfig.Exchange(r.Context(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange Google token", http.StatusInternalServerError)
@@ -67,10 +67,19 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Session error: %v", err)
 		return
 	}
-	session.Values["googleUserInfo"] = user
+	session.Values["username"] = user.Name
+	session.Values["authenticated"] = true
 	if err := session.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		log.Printf("Session save error: %v", err)
+		return
+	}
+
+	// OAuth ile giriş yapan kullanıcılar için INSERT işlemi
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')`, user.Name, user.Email)
+	if err != nil {
+		log.Fatalf("Failed to insert user: %v", err)
+		log.Printf("Database error: %v", err)
 		return
 	}
 
@@ -135,7 +144,11 @@ func GitHubLogin(w http.ResponseWriter, r *http.Request) {
 
 func GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-
+	if code == "" {
+		http.Error(w, "Code not found", http.StatusBadRequest)
+		log.Println("Code not found in URL")
+		return
+	}
 	token, err := githubOauthConfig.Exchange(r.Context(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange GitHub token", http.StatusInternalServerError)
@@ -162,19 +175,30 @@ func GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	user := models.GitHubUserInfo{
 		ID:    int(githubUserInfo["id"].(float64)),
 		Login: githubUserInfo["login"].(string),
-		Email: githubUserInfo["email"].(string),
+		Email: "",
 	}
-
+	if email, ok := githubUserInfo["email"].(string); ok {
+		user.Email = email
+	}
 	session, err := store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
 		return
 	}
-	session.Values["githubUserInfo"] = user
+	session.Values["username"] = user.Login
+	session.Values["authenticated"] = true
 	if err := session.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		log.Printf("Session save error: %v", err)
+		return
+	}
+
+	// OAuth ile giriş yapan kullanıcılar için INSERT işlemi
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')`, user.Login, user.Email)
+	if err != nil {
+		log.Fatalf("Failed to insert user: %v", err)
+		log.Printf("Database error: %v", err)
 		return
 	}
 
@@ -188,7 +212,6 @@ func FacebookLogin(w http.ResponseWriter, r *http.Request) {
 
 func FacebookCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
-
 	token, err := facebookOauthConfig.Exchange(r.Context(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange Facebook token", http.StatusInternalServerError)
@@ -224,10 +247,18 @@ func FacebookCallback(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Session error: %v", err)
 		return
 	}
-	session.Values["facebookUserInfo"] = user
+	session.Values["username"] = user.Name
+	session.Values["authenticated"] = true
 	if err := session.Save(r, w); err != nil {
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		log.Printf("Session save error: %v", err)
+		return
+	}
+
+	_, err = database.DB.Exec(`INSERT INTO users (username, email, password) VALUES (?, ?, 'oauth')`, user.Name, user.Email)
+	if err != nil {
+		log.Fatalf("Failed to insert user: %v", err)
+		log.Printf("Database error: %v", err)
 		return
 	}
 
