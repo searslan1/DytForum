@@ -1,10 +1,18 @@
 /* static/css/style.css */
+
 body {
     font-family: Arial, sans-serif;
-    margin: 20px;
+    margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f4f4f4;
 }
 
+/* Formlar için stil */
 form {
     width: 50%;
     margin: 0 auto;
@@ -26,31 +34,30 @@ button {
 button:hover {
     background-color: #0056b3;
 }
-body {
-    font-family: Arial, sans-serif;
+
+a {
+    text-decoration: none;
+}
+
+/* Header stil */
+header {
+    background-color: #f8f9fa;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
     margin: 0;
-    padding: 0;
+    color: #343a40;
+}
+
+/* Home section stil */
+.home {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    background-color: #f4f4f4;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-h1 {
-    font-size: 2.5em;
-    margin: 0;
-    color: #333;
-}
-
-.home {
-    text-align: center;
+    height: 80vh; /* Home bölümünü ortalamak için */
 }
 
 .home-buttons {
@@ -59,20 +66,49 @@ h1 {
     gap: 10px;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 1em;
-    cursor: pointer;
+.home-buttons a {
+    text-decoration: none;
+}
+
+.home-buttons button {
+    background-color: #007bff;
+    color: #fff;
     border: none;
-    background-color: #007BFF;
-    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
     border-radius: 5px;
 }
 
-button:hover {
+.home-buttons button:hover {
     background-color: #0056b3;
 }
 
-a {
-    text-decoration: none;
+/* OAuth butonları için stil */
+.oauth-buttons {
+    display: flex;
+    flex-direction: row; /* Yan yana olacak şekilde düzenledik */
+    gap: 10px; /* Butonlar arasında boşluk */
+    margin-top: 20px;
+}
+
+.oauth-buttons button {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.oauth-buttons button i {
+    font-size: 20px;
+}
+
+.oauth-buttons button:hover {
+    background-color: #f0f0f0;
 }
