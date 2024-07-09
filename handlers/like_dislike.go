@@ -18,7 +18,7 @@ func LikeThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := session.Values["user_id"].(int)
+	userID, ok := session.Values["userID"].(int)
 	if !ok {
 		http.Error(w, "User ID not found in session", http.StatusInternalServerError)
 		return

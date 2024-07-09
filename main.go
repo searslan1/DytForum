@@ -43,7 +43,7 @@ func main() {
 
 	// Protected endpoints
 	r.HandleFunc("/protected", handlers.ProtectedEndpoint)
-	r.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
+	r.HandleFunc("/profile", handlers.ProfileHandler)
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("GET", "POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
 	r.HandleFunc("/index", handlers.IndexHandler)

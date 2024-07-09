@@ -30,7 +30,10 @@ func createTables() error {
 		username TEXT NOT NULL UNIQUE,
 		password TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
-		facebook_id TEXT
+		facebook_id TEXT,
+		google_id TEXT,
+		github_id INTEGER
+
 	);
 	`
 	threadsTable := `
@@ -41,7 +44,7 @@ func createTables() error {
 		content TEXT NOT NULL,
 		likes INTEGER DEFAULT 0,
     	dislikes INTEGER DEFAULT 0,
-		user_id INTEGER NOT NULL,
+		userI_id INTEGER NOT NULL,
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`
@@ -91,7 +94,7 @@ func createTables() error {
 
 func GetUserByUsername(username string) (models.User, error) {
 	var user models.User
-	err := DB.QueryRow("SELECT id, email, username, password FROM users WHERE username = ?", username).Scan(&user.ID, &user.Email, &user.Username, &user.Password)
+	err := DB.QueryRow("SELECT id, email, username, password, google_id, github_id, facebook_id FROM users WHERE username = ?", username).Scan(&user.ID, &user.Email, &user.Username, &user.Password, &user.GoogleID, &user.GitHubID, &user.FacebookID)
 	return user, err
 }
 

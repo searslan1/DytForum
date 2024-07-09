@@ -2,10 +2,13 @@
 package models
 
 type User struct {
-	ID       int
-	Username string
-	Email    string
-	Password string
+	ID         int
+	Username   string
+	Email      string
+	Password   string
+	GoogleID   string
+	GitHubID   int
+	FacebookID string
 }
 
 type Thread struct {

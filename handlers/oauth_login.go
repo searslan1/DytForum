@@ -22,7 +22,6 @@ var (
 	googleOauthConfig   *oauth2.Config
 	githubOauthConfig   *oauth2.Config
 	facebookOauthConfig *oauth2.Config
-	// store               *sessions.CookieStore
 )
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {

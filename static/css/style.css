@@ -112,3 +112,28 @@ h1 {
 .oauth-buttons button:hover {
     background-color: #f0f0f0;
 }
+.oauth-buttons {
+    margin-top: 20px;
+}
+
+.oauth-button {
+    display: inline-block;
+    margin: 10px 0;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.google {
+    background-color: #dd4b39;
+}
+
+.github {
+    background-color: #333;
+}
+
+.facebook {
+    background-color: #3b5998;
+}
