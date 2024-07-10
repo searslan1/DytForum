@@ -15,8 +15,8 @@
         <p>Likes: {{ .Thread.Likes }}, Dislikes: {{ .Thread.Dislikes }}</p>
         <form method="post" action="/like-dislike-thread">
             <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
-            <button type="submit" name="like_type" value="1">Like</button>
-            <button type="submit" name="like_type" value="-1">Dislike</button>
+            <button type="submit" name="like_status" value="1">Like</button>
+            <button type="submit" name="like_status" value="-1">Dislike</button>
         </form>
         <h3>Comments</h3>
         {{ range .Comments }}
@@ -26,8 +26,8 @@
                 <form method="post" action="/like-dislike-comment">
                     <input type="hidden" name="comment_id" value="{{ .ID }}">
                     <input type="hidden" name="thread_id" value="{{ $.Thread.ID }}">
-                    <button type="submit" name="like_type" value="1">Like</button>
-                    <button type="submit" name="like_type" value="-1">Dislike</button>
+                    <button type="submit" name="like_status" value="1">Like</button>
+                    <button type="submit" name="like_status" value="-1">Dislike</button>
                 </form>
             </div>
         {{ end }}

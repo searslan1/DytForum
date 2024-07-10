@@ -41,6 +41,9 @@ func main() {
 	r.HandleFunc("/auth/facebook", handlers.FacebookLogin)
 	r.HandleFunc("/auth/facebook/callback", handlers.FacebookCallback)
 
+	//debug
+	http.HandleFunc("/debug-session", handlers.DebugSessionHandler)
+
 	// Protected endpoints
 	r.HandleFunc("/protected", handlers.ProtectedEndpoint)
 	r.HandleFunc("/profile", handlers.ProfileHandler)
@@ -54,6 +57,7 @@ func main() {
 
 	// Comment and like/dislike routes
 	r.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
+	r.HandleFunc("/like-dislike-comment", handlers.LikeComment)
 	r.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
 	r.HandleFunc("/like-dislike-thread", handlers.LikeThread).Methods("POST")
 

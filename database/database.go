@@ -44,7 +44,7 @@ func createTables() error {
 		content TEXT NOT NULL,
 		likes INTEGER DEFAULT 0,
     	dislikes INTEGER DEFAULT 0,
-		userI_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`
@@ -65,6 +65,7 @@ func createTables() error {
 	CREATE TABLE IF NOT EXISTS likes (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		thread_id INTEGER,
+		comment_id INTEGER,
 		user_id INTEGER,
 		like_status INTEGER,
 		FOREIGN KEY(user_id) REFERENCES users(id),

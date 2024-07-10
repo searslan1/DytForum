@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"html/template"
+	"log"
 	"net/http"
 
 	"DytForum/database"
@@ -14,7 +15,21 @@ import (
 	_ "github.com/gorilla/sessions"
 )
 
-var store = sessions.NewCookieStore([]byte("something-very-secret"))
+//var store = sessions.NewCookieStore([]byte("something-very-secret"))
+
+var store *sessions.CookieStore
+
+func init() {
+	store = sessions.NewCookieStore(
+		[]byte("something-very-secret"),
+	)
+
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7, // 7 days
+		HttpOnly: true,
+	}
+}
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
@@ -55,7 +70,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		var storedPassword string
-		err := database.DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedPassword)
+		var userID int
+		err := database.DB.QueryRow("SELECT id, password FROM users WHERE username = ?", username).Scan(&userID, &storedPassword)
 		if err != nil {
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
@@ -73,7 +89,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "session-name")
 		session.Values["authenticated"] = true
 		session.Values["username"] = username
-		session.Save(r, w)
+		session.Values["userID"] = userID
+		log.Printf("Login successful for user: %s with userID: %d", username, userID) // Added logging
+		err = session.Save(r, w)
+		//debug
+		if err != nil {
+			log.Printf("Failed to save session: %v", err) // Added logging
+			http.Error(w, "Failed to save session", http.StatusInternalServerError)
+			return
+		}
 
 		http.Redirect(w, r, "/index", http.StatusSeeOther)
 	}
@@ -124,4 +148,11 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect the user to the login page or any other appropriate page
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+
+// DebugSessionHandler to print session values for debugging
+func DebugSessionHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session-name")
+	log.Printf("Session values: %v", session.Values)
+	w.Write([]byte("Check server logs for session values"))
 }
