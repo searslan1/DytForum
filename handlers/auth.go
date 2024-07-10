@@ -12,7 +12,6 @@ import (
 	"DytForum/models"
 
 	"github.com/gorilla/sessions"
-	_ "github.com/gorilla/sessions"
 )
 
 //var store = sessions.NewCookieStore([]byte("something-very-secret"))

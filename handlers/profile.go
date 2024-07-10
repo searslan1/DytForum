@@ -55,7 +55,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, data)
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		http.Error(w, "Failed to execute template", http.StatusInternalServerError)
 		return
