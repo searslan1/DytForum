@@ -8,7 +8,7 @@
 <body>
     <section class="user-info-box">
         <h1>Welcome to the Forum</h1>
-        <form method="post" action="/create-thread">
+        <form method="post" action="/create-thread" enctype="multipart/form-data">
             <input type="text" name="title" placeholder="Thread Title" required>
             <textarea name="content" placeholder="Thread Content" required></textarea>
             <select id="category" name="category" required>
@@ -19,6 +19,8 @@
                 <option value="Hastalıklarda Beslenme">Hastalıklarda Beslenme</option>
                 <option value="Sporda Beslenme">Sporda Beslenme</option>
             </select>
+            <div>            <label for="picture">Upload Picture:</label>
+                <input type="file" id="picture" name="picture"><br><br></div>
             <button type="submit">Create Thread</button>
         </form>
         <a href="/profile">Profile</a> <!-- Profile link -->

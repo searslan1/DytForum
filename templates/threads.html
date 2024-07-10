@@ -13,6 +13,14 @@
         <p>{{ .Thread.Content }}</p>
         <p>Created by: {{ .Username }}</p>
         <p>Likes: {{ .Thread.Likes }}, Dislikes: {{ .Thread.Dislikes }}</p>
+
+        {{if .PictureError}}
+            <p style="color:red;">{{.PictureError}}</p>
+        {{end}}
+        {{if .PicturePath}}
+            <img src="/{{.PicturePath}}" alt="Thread Picture">
+        {{end}}
+
         <form method="post" action="/like-dislike-thread">
             <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
             <button type="submit" name="like_status" value="1">Like</button>
