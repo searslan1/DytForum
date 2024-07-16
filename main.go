@@ -7,6 +7,7 @@ import (
 
 	"DytForum/database"
 	"DytForum/handlers"
+	"DytForum/middleware"
 	"DytForum/models"
 
 	"github.com/gorilla/mux"
@@ -41,25 +42,21 @@ func main() {
 	r.HandleFunc("/auth/facebook", handlers.FacebookLogin)
 	r.HandleFunc("/auth/facebook/callback", handlers.FacebookCallback)
 
-	//debug
-	http.HandleFunc("/debug-session", handlers.DebugSessionHandler)
-
 	// Protected endpoints
-	r.HandleFunc("/protected", handlers.ProtectedEndpoint)
-	r.HandleFunc("/profile", handlers.ProfileHandler)
-	r.HandleFunc("/register", handlers.RegisterHandler).Methods("GET", "POST")
-	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
-	r.HandleFunc("/index", handlers.IndexHandler)
-	r.HandleFunc("/create-thread", handlers.CreateThreadHandler).Methods("GET", "POST")
-	r.HandleFunc("/thread", handlers.ViewThreadHandler).Methods("GET")
-	r.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
-	r.HandleFunc("/logout", handlers.LogoutHandler).Methods("GET")
+	protected := r.NewRoute().Subrouter()
+	protected.Use(middleware.AuthMiddleware)
+	protected.HandleFunc("/profile", handlers.ProfileHandler)
+	protected.HandleFunc("/create-thread", handlers.CreateThreadHandler).Methods("GET", "POST")
+	protected.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
+	protected.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
+	protected.HandleFunc("/like-dislike-thread", handlers.LikeThread).Methods("POST")
 
-	// Comment and like/dislike routes
-	r.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
-	r.HandleFunc("/like-dislike-comment", handlers.LikeComment)
-	r.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
-	r.HandleFunc("/like-dislike-thread", handlers.LikeThread).Methods("POST")
+	// Public endpoints
+	public := r.NewRoute().Subrouter()
+	public.HandleFunc("/index", handlers.IndexHandler)
+	public.HandleFunc("/thread", handlers.ViewThreadHandler).Methods("GET")
+	public.HandleFunc("/profile", handlers.ProfileHandler).Methods("GET")
+	public.HandleFunc("/logout", handlers.LogoutHandler).Methods("GET")
 
 	// Static files
 	fs := http.FileServer(http.Dir("./static"))

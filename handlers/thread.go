@@ -2,14 +2,15 @@
 package handlers
 
 import (
-	"DytForum/database"
-	"DytForum/models"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+
+	"DytForum/database"
+	"DytForum/models"
 )
 
 // CreateThreadHandler handles the creation of a new thread.
@@ -24,20 +25,28 @@ func CreateThreadHandler(w http.ResponseWriter, r *http.Request) {
 		tmpl := template.Must(template.ParseFiles("templates/create_thread.html"))
 		tmpl.Execute(w, nil)
 	} else if r.Method == "POST" {
-		// ParseMultipartForm parses a request body as a multipart/form-data.
 		err := r.ParseMultipartForm(20 << 20) // 20 MB limit for file size
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Handle file upload
-		file, _, err := r.FormFile("picture")
-		if err != nil {
-			http.Error(w, "Error uploading picture: "+err.Error(), http.StatusInternalServerError)
-			return
+		for _, headers := range r.MultipartForm.File {
+			for _, header := range headers {
+				file, err := header.Open()
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer file.Close()
+
+				// Check file size
+				if header.Size > 20<<20 {
+					http.Error(w, "File size exceeds the limit", http.StatusBadRequest)
+					return
+				}
+			}
 		}
-		defer file.Close()
 
 		category := r.FormValue("category")
 		title := r.FormValue("title")
@@ -65,28 +74,34 @@ func CreateThreadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Create the uploads directory if it doesn't exist
-		uploadDir := "static/uploads"
-		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-			err = os.MkdirAll(uploadDir, 0755)
+		// Handle file upload if there's a file
+		file, _, err := r.FormFile("picture")
+		if err == nil {
+			defer file.Close()
+
+			// Create the uploads directory if it doesn't exist
+			uploadDir := "static/uploads"
+			if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+				err = os.MkdirAll(uploadDir, 0o755)
+				if err != nil {
+					http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+					return
+				}
+			}
+
+			// Save the file
+			filePath := fmt.Sprintf("%s/%d.jpg", uploadDir, threadID) // Change the path and extension as needed
+			out, err := os.Create(filePath)
 			if err != nil {
-				http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Error saving picture: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-		}
-
-		// Save the file
-		filePath := fmt.Sprintf("%s/%d.jpg", uploadDir, threadID) // Change the path and extension as needed
-		out, err := os.Create(filePath)
-		if err != nil {
-			http.Error(w, "Error saving picture: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer out.Close()
-		_, err = io.Copy(out, file)
-		if err != nil {
-			http.Error(w, "Error saving picture: "+err.Error(), http.StatusInternalServerError)
-			return
+			defer out.Close()
+			_, err = io.Copy(out, file)
+			if err != nil {
+				http.Error(w, "Error saving picture: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		http.Redirect(w, r, "/index", http.StatusSeeOther)

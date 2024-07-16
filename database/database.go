@@ -32,7 +32,7 @@ func createTables() error {
 		email TEXT NOT NULL UNIQUE,
 		facebook_id TEXT,
 		google_id TEXT,
-		github_id INTEGER
+		github_id TEXT
 
 	);
 	`

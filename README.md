@@ -13,9 +13,10 @@ DytForum
 ├── handlers
 │   ├── auth.go
 │   ├── comments.go
-│   ├── face_github_google.go
 │   ├── home.go
 │   ├── like_dislike.go
+│   ├── oauth_login.go
+│   ├── oauth_register.go
 │   ├── profile.go
 │   ├── thread.go
 │   ├── threads-comments.go
@@ -24,13 +25,20 @@ DytForum
 ├── models
 │   └── models.go
 ├── static
-│   └── css
-│       └── style.css
+│   ├── css
+│   │   └── style.css
+│   └── uploads
+│       ├── 22.jpg
+│       ├── 23.jpg
+│       ├── 24.jpg
+│       ├── 25.jpg
+│       └── 26.jpg
 └── templates
     ├── create-comment.html
     ├── create_thread.html
     ├── home.html
     ├── index.html
+    ├── like-dislike-comment.html
     ├── like-dislike-thread.html
     ├── login.html
     ├── profile.html
@@ -38,4 +46,4 @@ DytForum
     ├── secret.html
     └── threads.html
 
-7 directories, 27 files
+8 directories, 34 files
