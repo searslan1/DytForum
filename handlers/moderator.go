@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -116,24 +117,95 @@ func ModeratorPanelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := database.DB.Query("SELECT id, title FROM threads WHERE approved = 0")
+	// Fetch pending threads and reports
+	pendingThreads, err := fetchPendingThreads()
 	if err != nil {
-		http.Error(w, "Server error, unable to retrieve threads.", http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch pending threads", http.StatusInternalServerError)
 		return
+	}
+
+	pendingReports, err := fetchPendingReports()
+	if err != nil {
+		http.Error(w, "Failed to fetch pending reports", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/moderator_panel.html"))
+	data := struct {
+		PendingThreads []models.Thread
+		PendingReports []models.Report
+	}{
+		PendingThreads: pendingThreads,
+		PendingReports: pendingReports,
+	}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Failed to render moderator panel", http.StatusInternalServerError)
+		log.Printf("Failed to render moderator panel: %v", err)
+		return
+	}
+}
+
+func fetchPendingThreads() ([]models.Thread, error) {
+	rows, err := database.DB.Query("SELECT id, category, title, content, likes, dislikes, user_id, approved FROM threads WHERE approved = 0")
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 
 	var pendingThreads []models.Thread
 	for rows.Next() {
 		var thread models.Thread
-		err := rows.Scan(&thread.ID, &thread.Title)
+		err := rows.Scan(&thread.ID, &thread.Category, &thread.Title, &thread.Content, &thread.Likes, &thread.Dislikes, &thread.UserID, &thread.Approved)
 		if err != nil {
-			http.Error(w, "Server error, unable to process threads.", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 		pendingThreads = append(pendingThreads, thread)
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/moderator_panel.html"))
-	tmpl.Execute(w, struct{ PendingThreads []models.Thread }{PendingThreads: pendingThreads})
+	return pendingThreads, nil
+}
+
+func fetchPendingReports() ([]models.Report, error) {
+	rows, err := database.DB.Query(`
+		SELECT 
+			reports.id, reports.thread_id, reports.user_id, reports.reason, 
+			users.username, threads.title, threads.content 
+		FROM reports 
+		INNER JOIN users ON reports.user_id = users.id 
+		INNER JOIN threads ON reports.thread_id = threads.id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var pendingReports []models.Report
+	for rows.Next() {
+		var report models.Report
+		err := rows.Scan(&report.ID, &report.ThreadID, &report.UserID, &report.Reason, &report.Username, &report.Title, &report.Content)
+		if err != nil {
+			return nil, err
+		}
+		pendingReports = append(pendingReports, report)
+	}
+
+	return pendingReports, nil
+}
+
+func DeleteThreadHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	threadID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid thread ID", http.StatusBadRequest)
+		return
+	}
+
+	_, err = database.DB.Exec("DELETE FROM threads WHERE id = ?", threadID)
+	if err != nil {
+		http.Error(w, "Failed to delete thread", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/moderator/panel", http.StatusSeeOther)
 }

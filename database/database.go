@@ -32,7 +32,7 @@ func createTables() error {
 		email TEXT NOT NULL UNIQUE,
 		facebook_id TEXT,
 		google_id TEXT,
-		github_id INTEGER,
+		github_id TEXT,
 		role VARCHAR(20) DEFAULT 'user'
 	);
 	`
@@ -88,6 +88,12 @@ func createTables() error {
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`
+	categoriesTable := `
+	CREATE TABLE IF NOT EXISTS categories (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL UNIQUE
+	);
+	`
 	reportsTable := `
 	CREATE TABLE IF NOT EXISTS reports (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,6 +104,7 @@ func createTables() error {
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`
+
 	_, err := DB.Exec(usersTable)
 	if err != nil {
 		return fmt.Errorf("error creating users table: %v", err)
@@ -122,6 +129,10 @@ func createTables() error {
 	_, err = DB.Exec(moderatorRequestsTable)
 	if err != nil {
 		return fmt.Errorf("error creating moderator requests table: %v", err)
+	}
+	_, err = DB.Exec(categoriesTable)
+	if err != nil {
+		return fmt.Errorf("error creating categories table: %v", err)
 	}
 	_, err = DB.Exec(reportsTable)
 	if err != nil {

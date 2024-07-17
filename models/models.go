@@ -80,4 +80,7 @@ type Report struct {
 	ThreadID int
 	UserID   int
 	Reason   string
+	Username string
+	Title    string
+	Content  string
 }

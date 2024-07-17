@@ -7,6 +7,7 @@ import (
 	"DytForum/session"
 )
 
+// AuthMiddleware kontrol eder
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := session.Store.Get(r, "session-name")
@@ -25,6 +26,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// AdminMiddleware kontrol eder
 func AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := session.Store.Get(r, "session-name")
@@ -43,6 +45,7 @@ func AdminMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// ModeratorMiddleware kontrol eder
 func ModeratorMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := session.Store.Get(r, "session-name")
@@ -55,6 +58,18 @@ func ModeratorMiddleware(next http.Handler) http.Handler {
 		role, ok := session.Values["role"].(string)
 		if !ok || role != "moderator" {
 			http.Error(w, "You must be a moderator to access this page", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// GuestMiddleware ayarlar
+func GuestMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := session.Store.Get(r, "session-name")
+		if auth, ok := session.Values["authenticated"].(bool); ok && auth {
+			http.Redirect(w, r, "/index", http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r)

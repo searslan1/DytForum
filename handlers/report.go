@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"DytForum/database"
+	"DytForum/models"
 	"DytForum/session"
 )
 
@@ -18,20 +19,30 @@ func ReportThreadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := session.Values["userID"].(int)
+
+	// Parse thread_id from form value
 	threadID, err := strconv.Atoi(r.FormValue("thread_id"))
 	if err != nil {
 		http.Error(w, "Invalid thread ID", http.StatusBadRequest)
 		return
 	}
-	reason := r.FormValue("reason")
 
+	// Validate reason field
+	reason := r.FormValue("reason")
+	if reason == "" {
+		http.Error(w, "Reason cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Insert report into database
 	_, err = database.DB.Exec("INSERT INTO reports (thread_id, user_id, reason) VALUES (?, ?, ?)", threadID, userID, reason)
 	if err != nil {
 		http.Error(w, "Failed to report thread", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/thread?id="+strconv.Itoa(threadID), http.StatusSeeOther)
+	// Redirect to the index page after reporting
+	http.Redirect(w, r, "/index", http.StatusSeeOther)
 }
 
 func ListReportsHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +59,14 @@ func ListReportsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := database.DB.Query("SELECT reports.id, reports.thread_id, reports.user_id, reports.reason, users.username FROM reports INNER JOIN users ON reports.user_id = users.id")
+	rows, err := database.DB.Query(`
+		SELECT 
+			reports.id, reports.thread_id, reports.user_id, reports.reason, 
+			users.username, threads.title, threads.content 
+		FROM reports 
+		INNER JOIN users ON reports.user_id = users.id 
+		INNER JOIN threads ON reports.thread_id = threads.id
+	`)
 	if err != nil {
 		log.Printf("ListReportsHandler: Failed to retrieve reports: %v", err)
 		http.Error(w, "Failed to retrieve reports", http.StatusInternalServerError)
@@ -62,6 +80,8 @@ func ListReportsHandler(w http.ResponseWriter, r *http.Request) {
 		UserID   int
 		Reason   string
 		Username string
+		Title    string
+		Content  string
 	}
 	for rows.Next() {
 		var report struct {
@@ -70,8 +90,10 @@ func ListReportsHandler(w http.ResponseWriter, r *http.Request) {
 			UserID   int
 			Reason   string
 			Username string
+			Title    string
+			Content  string
 		}
-		err := rows.Scan(&report.ID, &report.ThreadID, &report.UserID, &report.Reason, &report.Username)
+		err := rows.Scan(&report.ID, &report.ThreadID, &report.UserID, &report.Reason, &report.Username, &report.Title, &report.Content)
 		if err != nil {
 			log.Printf("ListReportsHandler: Failed to scan report: %v", err)
 			http.Error(w, "Failed to scan report", http.StatusInternalServerError)
@@ -80,16 +102,25 @@ func ListReportsHandler(w http.ResponseWriter, r *http.Request) {
 		reports = append(reports, report)
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/reports.html"))
-	err = tmpl.Execute(w, struct {
-		Reports []struct {
+	tmpl := template.Must(template.ParseFiles("templates/moderator_panel.html"))
+	var pendingThreads []models.Thread
+
+	data := struct {
+		PendingThreads []models.Thread
+		Reports        []struct {
 			ID       int
 			ThreadID int
 			UserID   int
 			Reason   string
 			Username string
+			Title    string
+			Content  string
 		}
-	}{Reports: reports})
+	}{
+		PendingThreads: pendingThreads, // Assuming you have pendingThreads defined elsewhere
+		Reports:        reports,
+	}
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		log.Printf("ListReportsHandler: Failed to execute template: %v", err)
 		http.Error(w, "Failed to execute template", http.StatusInternalServerError)

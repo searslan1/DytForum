@@ -1,8 +1,8 @@
 # DytForum
 
-misafir girişi indexe yönlendirsin sadece görüntüleme olsun
-profilde thread, comment, like görüntüleme, profil fotoğrafı
-like çalışmıyor
+profil fotoğrafı
+reports moderatör panelinde görüntülenmiyor
+
 DytForum
 ├── README.md
 ├── database

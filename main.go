@@ -57,13 +57,17 @@ func main() {
 	moderator.HandleFunc("/moderator/reports", handlers.ListReportsHandler).Methods("GET")
 	moderator.HandleFunc("/moderator/approve-report/{id:[0-9]+}", handlers.ApproveReportHandler).Methods("GET")
 	moderator.HandleFunc("/moderator/reject-report/{id:[0-9]+}", handlers.RejectReportHandler).Methods("GET")
+	moderator.HandleFunc("/moderator/delete-thread/{id:[0-9]+}", handlers.DeleteThreadHandler).Methods("GET")
+
 	// Admin endpoints
 	admin := r.NewRoute().Subrouter()
 	admin.Use(middleware.AdminMiddleware)
+	admin.HandleFunc("/admin/panel", handlers.AdminPanelHandler).Methods("GET")
 	admin.HandleFunc("/admin/moderator-requests", handlers.ListModeratorRequestsHandler).Methods("GET")
 	admin.HandleFunc("/admin/approve-moderator/{id:[0-9]+}", handlers.ApproveModeratorHandler).Methods("GET")
 	admin.HandleFunc("/admin/reject-moderator/{id:[0-9]+}", handlers.RejectModeratorHandler).Methods("GET")
 	admin.HandleFunc("/admin/promote-user/{id:[0-9]+}", handlers.PromoteUserHandler)
+	admin.HandleFunc("/admin/demote-user/{id:[0-9]+}", handlers.DemoteUserHandler)
 	admin.HandleFunc("/admin/create-category", handlers.CreateCategoryHandler).Methods("GET", "POST")
 	admin.HandleFunc("/admin/delete-category", handlers.DeleteCategoryHandler).Methods("GET")
 

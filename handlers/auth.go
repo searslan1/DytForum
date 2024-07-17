@@ -22,6 +22,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		isModerator := r.FormValue("moderator") == "on"
+		isAdmin := r.FormValue("admin") == "on" // Admin kaydı için
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
@@ -29,14 +30,19 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		_, err = database.DB.Exec("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')", username, email, hashedPassword)
+		role := "user"
+		if isAdmin {
+			role = "admin"
+		}
+
+		_, err = database.DB.Exec("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", username, email, hashedPassword, role)
 		if err != nil {
 			log.Printf("RegisterHandler: Failed to insert user: %v", err)
 			http.Error(w, "Server error, unable to create your account.", http.StatusInternalServerError)
 			return
 		}
 
-		if isModerator {
+		if isModerator && !isAdmin { // Sadece kullanıcı ve moderatör kaydı için
 			var userID int
 			err = database.DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
 			if err != nil {
@@ -62,9 +68,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "POST" {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
-		var storedPassword string
+		var storedPassword, role string
 		var userID int
-		var role string
 		err := database.DB.QueryRow("SELECT id, password, role FROM users WHERE username = ?", username).Scan(&userID, &storedPassword, &role)
 		if err != nil {
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
@@ -89,7 +94,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		http.Redirect(w, r, "/index", http.StatusSeeOther)
+		if role == "admin" {
+			http.Redirect(w, r, "/admin/panel", http.StatusSeeOther)
+		} else {
+			http.Redirect(w, r, "/index", http.StatusSeeOther)
+		}
 	}
 }
 

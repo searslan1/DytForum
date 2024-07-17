@@ -29,23 +29,24 @@
         <h2>Reports</h2>
         <table>
             <tr>
-                <th>Report ID</th>
                 <th>Thread ID</th>
-                <th>User ID</th>
+                <th>Reported by</th>
+                <th>Title</th>
+                <th>Content</th>
                 <th>Reason</th>
-                <th>User</th>
                 <th>Action</th>
             </tr>
-            {{range .Reports}}
+            {{range .PendingReports}}
             <tr>
-                <td>{{.ID}}</td>
                 <td>{{.ThreadID}}</td>
-                <td>{{.UserID}}</td>
-                <td>{{.Reason}}</td>
                 <td>{{.Username}}</td>
+                <td>{{.Title}}</td>
+                <td>{{.Content}}</td>
+                <td>{{.Reason}}</td>
                 <td>
                     <a href="/moderator/approve-report/{{.ID}}">Approve</a>
                     <a href="/moderator/reject-report/{{.ID}}">Reject</a>
+                    <a href="/moderator/delete-thread/{{.ThreadID}}">Delete Thread</a>
                 </td>
             </tr>
             {{end}}
