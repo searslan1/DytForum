@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Moderator Panel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <section class="moderator-panel">
+        <h1>Moderator Panel</h1>
+        
+        <h2>Pending Threads</h2>
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>Action</th>
+            </tr>
+            {{range .PendingThreads}}
+            <tr>
+                <td>{{.Title}}</td>
+                <td>
+                    <a href="/moderator/approve-thread/{{.ID}}">Approve</a>
+                    <a href="/moderator/reject-thread/{{.ID}}">Reject</a>
+                </td>
+            </tr>
+            {{end}}
+        </table>
+        
+        <h2>Reports</h2>
+        <table>
+            <tr>
+                <th>Report ID</th>
+                <th>Thread ID</th>
+                <th>User ID</th>
+                <th>Reason</th>
+                <th>User</th>
+                <th>Action</th>
+            </tr>
+            {{range .Reports}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.ThreadID}}</td>
+                <td>{{.UserID}}</td>
+                <td>{{.Reason}}</td>
+                <td>{{.Username}}</td>
+                <td>
+                    <a href="/moderator/approve-report/{{.ID}}">Approve</a>
+                    <a href="/moderator/reject-report/{{.ID}}">Reject</a>
+                </td>
+            </tr>
+            {{end}}
+        </table>
+        
+    </section>
+</body>
+</html>

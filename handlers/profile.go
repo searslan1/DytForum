@@ -2,61 +2,77 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
+	"DytForum/database"
 	"DytForum/models"
+	"DytForum/session"
 )
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
+		log.Printf("Failed to get session: %v", err)
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		return
 	}
 
-	googleUserInfo, googleOk := session.Values["googleUserInfo"].(models.GoogleUserInfo)
-	githubUserInfo, githubOk := session.Values["githubUserInfo"].(models.GitHubUserInfo)
-	facebookUserInfo, facebookOk := session.Values["facebookUserInfo"].(models.FacebookUserInfo)
-
-	var username string
-	if googleOk {
-		username = googleUserInfo.Name
-	} else if githubOk {
-		username = githubUserInfo.Login
-	} else if facebookOk {
-		username = facebookUserInfo.Name
-	} else {
-		http.Error(w, "User not logged in", http.StatusUnauthorized)
+	auth, ok := session.Values["authenticated"].(bool)
+	if !ok || !auth {
+		http.Error(w, "You must be logged in to access this page", http.StatusUnauthorized)
 		return
 	}
+
+	username := session.Values["username"].(string)
+
+	// Kullanıcının veritabanındaki bilgilerini al
+	user, err := database.GetUserByUsername(username)
+	if err != nil {
+		log.Printf("Failed to retrieve user: %v", err)
+		http.Error(w, "Server error, unable to retrieve your profile", http.StatusInternalServerError)
+		return
+	}
+
 	// Kullanıcının thread'lerini ve yorumlarını al
-	threads := getThreadsByUser(username)
-	comments := getCommentsByUser(username)
+	threads, err := database.GetThreadsByUserID(user.ID)
+	if err != nil {
+		log.Printf("Failed to retrieve threads: %v", err)
+		http.Error(w, "Server error, unable to retrieve your threads", http.StatusInternalServerError)
+		return
+	}
+
+	comments, err := database.GetCommentsByUserID(user.ID)
+	if err != nil {
+		log.Printf("Failed to retrieve comments: %v", err)
+		http.Error(w, "Server error, unable to retrieve your comments", http.StatusInternalServerError)
+		return
+	}
 
 	data := struct {
-		Username         string
-		GoogleUserInfo   models.GoogleUserInfo
-		GitHubUserInfo   models.GitHubUserInfo
-		FacebookUserInfo models.FacebookUserInfo
-		Threads          []models.Thread
-		Comments         []models.Comment
+		Username string
+		Email    string
+		Role     string
+		Threads  []models.Thread
+		Comments []models.Comment
 	}{
-		Username:         username,
-		GoogleUserInfo:   googleUserInfo,
-		GitHubUserInfo:   githubUserInfo,
-		FacebookUserInfo: facebookUserInfo,
-		Threads:          threads,
-		Comments:         comments,
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     user.Role,
+		Threads:  threads,
+		Comments: comments,
 	}
 
 	tmpl, err := template.ParseFiles("templates/profile.html")
 	if err != nil {
+		log.Printf("Failed to parse template: %v", err)
 		http.Error(w, "Failed to parse template", http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
+		log.Printf("Failed to execute template: %v", err)
 		http.Error(w, "Failed to execute template", http.StatusInternalServerError)
 		return
 	}

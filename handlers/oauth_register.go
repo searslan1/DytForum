@@ -7,6 +7,7 @@ import (
 
 	"DytForum/database"
 	"DytForum/models"
+	"DytForum/session"
 )
 
 func GoogleRegisterCallback(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +58,7 @@ func GoogleRegisterCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Oturumu başlat ve kullanıcıyı yönlendir
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
@@ -125,7 +126,7 @@ func GitHubRegisterCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Oturumu başlat ve kullanıcıyı yönlendir
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
@@ -190,7 +191,7 @@ func FacebookRegisterCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Oturumu başlat ve kullanıcıyı yönlendir
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)

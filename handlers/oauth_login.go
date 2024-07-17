@@ -10,6 +10,7 @@ import (
 
 	"DytForum/database"
 	"DytForum/models"
+	"DytForum/session"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
@@ -59,7 +60,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		Email: googleUserInfo["email"].(string),
 	}
 
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
@@ -86,7 +87,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func Profile(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
@@ -118,7 +119,7 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProtectedEndpoint(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Error getting session: %v", err) // Log the error
@@ -178,7 +179,7 @@ func GitHubCallback(w http.ResponseWriter, r *http.Request) {
 	if email, ok := githubUserInfo["email"].(string); ok {
 		user.Email = email
 	}
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)
@@ -239,7 +240,7 @@ func FacebookCallback(w http.ResponseWriter, r *http.Request) {
 		Email: facebookUserInfo["email"].(string),
 	}
 
-	session, err := store.Get(r, "session-name")
+	session, err := session.Store.Get(r, "session-name")
 	if err != nil {
 		http.Error(w, "Failed to get session", http.StatusInternalServerError)
 		log.Printf("Session error: %v", err)

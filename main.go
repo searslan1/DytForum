@@ -1,25 +1,16 @@
 package main
 
 import (
-	"encoding/gob"
 	"log"
 	"net/http"
 
 	"DytForum/database"
 	"DytForum/handlers"
 	"DytForum/middleware"
-	"DytForum/models"
+	"DytForum/session"
 
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
-
-func init() {
-	// models paketinizdeki struct'ları gob'a kaydedin
-	gob.Register(models.GoogleUserInfo{})
-	gob.Register(models.GitHubUserInfo{})
-	gob.Register(models.FacebookUserInfo{})
-}
 
 func main() {
 	if err := database.InitDB("forum.db"); err != nil {
@@ -27,13 +18,11 @@ func main() {
 	}
 	defer database.DB.Close()
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
+	session.Init()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handlers.HomeHandler)
+
 	// Auth routes
 	r.HandleFunc("/auth/github/login", handlers.GitHubLogin)
 	r.HandleFunc("/auth/github/callback", handlers.GitHubCallback)
@@ -41,6 +30,13 @@ func main() {
 	r.HandleFunc("/auth/google/callback", handlers.GoogleCallback)
 	r.HandleFunc("/auth/facebook", handlers.FacebookLogin)
 	r.HandleFunc("/auth/facebook/callback", handlers.FacebookCallback)
+
+	// Login and Register routes
+	r.HandleFunc("/register", handlers.RegisterHandler).Methods("GET", "POST")
+	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
+
+	// Moderator request route
+	r.HandleFunc("/moderator-request", handlers.ModeratorRequestHandler).Methods("GET", "POST")
 
 	// Protected endpoints
 	protected := r.NewRoute().Subrouter()
@@ -50,6 +46,26 @@ func main() {
 	protected.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
 	protected.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
 	protected.HandleFunc("/like-dislike-thread", handlers.LikeThread).Methods("POST")
+	protected.HandleFunc("/report-thread", handlers.ReportThreadHandler).Methods("POST")
+
+	// Moderator endpoints
+	moderator := r.NewRoute().Subrouter()
+	moderator.Use(middleware.ModeratorMiddleware)
+	moderator.HandleFunc("/moderator/panel", handlers.ModeratorPanelHandler).Methods("GET")
+	moderator.HandleFunc("/moderator/approve-thread/{id:[0-9]+}", handlers.ApproveThreadHandler).Methods("GET")
+	moderator.HandleFunc("/moderator/reject-thread/{id:[0-9]+}", handlers.RejectThreadHandler).Methods("GET")
+	moderator.HandleFunc("/moderator/reports", handlers.ListReportsHandler).Methods("GET")
+	moderator.HandleFunc("/moderator/approve-report/{id:[0-9]+}", handlers.ApproveReportHandler).Methods("GET")
+	moderator.HandleFunc("/moderator/reject-report/{id:[0-9]+}", handlers.RejectReportHandler).Methods("GET")
+	// Admin endpoints
+	admin := r.NewRoute().Subrouter()
+	admin.Use(middleware.AdminMiddleware)
+	admin.HandleFunc("/admin/moderator-requests", handlers.ListModeratorRequestsHandler).Methods("GET")
+	admin.HandleFunc("/admin/approve-moderator/{id:[0-9]+}", handlers.ApproveModeratorHandler).Methods("GET")
+	admin.HandleFunc("/admin/reject-moderator/{id:[0-9]+}", handlers.RejectModeratorHandler).Methods("GET")
+	admin.HandleFunc("/admin/promote-user/{id:[0-9]+}", handlers.PromoteUserHandler)
+	admin.HandleFunc("/admin/create-category", handlers.CreateCategoryHandler).Methods("GET", "POST")
+	admin.HandleFunc("/admin/delete-category", handlers.DeleteCategoryHandler).Methods("GET")
 
 	// Public endpoints
 	public := r.NewRoute().Subrouter()

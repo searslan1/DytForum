@@ -1,60 +1,54 @@
 package handlers
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"html/template"
 	"log"
 	"net/http"
 
 	"DytForum/database"
 	"DytForum/models"
+	"DytForum/session"
 
-	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/bcrypt"
 )
-
-//var store = sessions.NewCookieStore([]byte("something-very-secret"))
-
-var store *sessions.CookieStore
-
-func init() {
-	store = sessions.NewCookieStore(
-		[]byte("something-very-secret"),
-	)
-
-	store.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400 * 7, // 7 days
-		HttpOnly: true,
-	}
-}
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl := template.Must(template.ParseFiles("templates/register.html"))
 		tmpl.Execute(w, nil)
 	} else if r.Method == "POST" {
-		email := r.FormValue("email")
 		username := r.FormValue("username")
+		email := r.FormValue("email")
 		password := r.FormValue("password")
+		isModerator := r.FormValue("moderator") == "on"
 
-		// E-posta adresinin zaten var olup olmadığını kontrol edin
-		var existingEmail string
-		err := database.DB.QueryRow("SELECT email FROM users WHERE email = ?", email).Scan(&existingEmail)
-		if err == nil {
-			http.Error(w, "Email address already in use", http.StatusBadRequest)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			http.Error(w, "Server error, unable to create your account.", http.StatusInternalServerError)
 			return
 		}
 
-		hash := sha256.New()
-		hash.Write([]byte(password))
-		hashedPassword := hex.EncodeToString(hash.Sum(nil))
-
-		_, err = database.DB.Exec("INSERT INTO users (email, username, password) VALUES (?, ?, ?)", email, username, hashedPassword)
+		_, err = database.DB.Exec("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')", username, email, hashedPassword)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Printf("RegisterHandler: Failed to insert user: %v", err)
+			http.Error(w, "Server error, unable to create your account.", http.StatusInternalServerError)
 			return
+		}
+
+		if isModerator {
+			var userID int
+			err = database.DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+			if err != nil {
+				http.Error(w, "Server error, unable to process your request.", http.StatusInternalServerError)
+				return
+			}
+
+			_, err = database.DB.Exec("INSERT INTO moderator_requests (user_id, reason, status) VALUES (?, ?, 'pending')", userID, "Applied during registration")
+			if err != nil {
+				http.Error(w, "Server error, unable to submit your moderator request.", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -70,30 +64,27 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 		var storedPassword string
 		var userID int
-		err := database.DB.QueryRow("SELECT id, password FROM users WHERE username = ?", username).Scan(&userID, &storedPassword)
+		var role string
+		err := database.DB.QueryRow("SELECT id, password, role FROM users WHERE username = ?", username).Scan(&userID, &storedPassword, &role)
 		if err != nil {
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
-		hash := sha256.New()
-		hash.Write([]byte(password))
-		hashedPassword := hex.EncodeToString(hash.Sum(nil))
-
-		if hashedPassword != storedPassword {
+		if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 
-		session, _ := store.Get(r, "session-name")
+		session, _ := session.Store.Get(r, "session-name")
 		session.Values["authenticated"] = true
 		session.Values["username"] = username
 		session.Values["userID"] = userID
-		log.Printf("Login successful for user: %s with userID: %d", username, userID) // Added logging
+		session.Values["role"] = role
+		log.Printf("Login successful for user: %s with userID: %d and role: %s", username, userID, role)
 		err = session.Save(r, w)
-		//debug
 		if err != nil {
-			log.Printf("Failed to save session: %v", err) // Added logging
+			log.Printf("Failed to save session: %v", err)
 			http.Error(w, "Failed to save session", http.StatusInternalServerError)
 			return
 		}
@@ -138,7 +129,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
+	session, _ := session.Store.Get(r, "session-name")
 
 	// Revoke user's authentication by clearing session values
 	session.Values["authenticated"] = false
@@ -151,7 +142,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // DebugSessionHandler to print session values for debugging
 func DebugSessionHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
+	session, _ := session.Store.Get(r, "session-name")
 	log.Printf("Session values: %v", session.Values)
 	w.Write([]byte("Check server logs for session values"))
 }

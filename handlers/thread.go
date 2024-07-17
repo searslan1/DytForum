@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 
 	"DytForum/database"
 	"DytForum/models"
+	"DytForum/session"
 )
 
 // CreateThreadHandler handles the creation of a new thread.
 func CreateThreadHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
+	session, _ := session.Store.Get(r, "session-name")
 	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 		http.Error(w, "You must be logged in to create a thread", http.StatusUnauthorized)
 		return
@@ -109,6 +111,7 @@ func CreateThreadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ViewThreadHandler handles the display of a thread with its comments.
+
 func ViewThreadHandler(w http.ResponseWriter, r *http.Request) {
 	threadIDStr := r.URL.Query().Get("id")
 	if threadIDStr == "" {
@@ -124,7 +127,7 @@ func ViewThreadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch the thread details
 	var thread models.Thread
-	err = database.DB.QueryRow("SELECT id, title, content, category, likes, dislikes, user_id FROM threads WHERE id = ?", threadID).Scan(&thread.ID, &thread.Title, &thread.Content, &thread.Category, &thread.Likes, &thread.Dislikes, &thread.UserID)
+	err = database.DB.QueryRow("SELECT id, title, content, category, likes, dislikes, user_id, approved FROM threads WHERE id = ?", threadID).Scan(&thread.ID, &thread.Title, &thread.Content, &thread.Category, &thread.Likes, &thread.Dislikes, &thread.UserID, &thread.Approved)
 	if err != nil {
 		http.Error(w, "Failed to fetch thread details", http.StatusInternalServerError)
 		return
@@ -181,6 +184,14 @@ func ViewThreadHandler(w http.ResponseWriter, r *http.Request) {
 
 // renderTemplate renders the HTML templates.
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) error {
-	templates := template.Must(template.ParseGlob("templates/*.html"))
-	return templates.ExecuteTemplate(w, tmpl, data)
+	templates, err := template.ParseGlob("templates/*.html")
+	if err != nil {
+		log.Printf("Error parsing templates: %v", err)
+		return err
+	}
+	err = templates.ExecuteTemplate(w, tmpl, data)
+	if err != nil {
+		log.Printf("Error executing template: %v", err)
+	}
+	return err
 }

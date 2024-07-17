@@ -9,6 +9,7 @@ type User struct {
 	GoogleID   string
 	GitHubID   int
 	FacebookID string
+	Role       string
 }
 
 type Thread struct {
@@ -21,17 +22,17 @@ type Thread struct {
 	Dislikes int
 	Username string
 	Comments []Comment
+	Approved int
 }
 
 type Comment struct {
-	ID          int
-	ThreadID    int
-	UserID      int
-	Content     string
-	ThreadTitle string // gerekli mi bu ?
-	Likes       int
-	Dislikes    int
-	Username    string
+	ID       int
+	ThreadID int
+	UserID   int
+	Content  string
+	Likes    int
+	Dislikes int
+	Username string
 }
 
 type Like struct {
@@ -56,4 +57,27 @@ type FacebookUserInfo struct {
 	ID    string
 	Name  string
 	Email string
+}
+type ModeratorRequest struct {
+	ID       int
+	UserID   int
+	Username string
+	Reason   string
+	Status   string
+}
+type ProfileData struct {
+	Username         string
+	Email            string
+	Role             string
+	GoogleUserInfo   GoogleUserInfo
+	GitHubUserInfo   GitHubUserInfo
+	FacebookUserInfo FacebookUserInfo
+	Threads          []Thread
+	Comments         []Comment
+}
+type Report struct {
+	ID       int
+	ThreadID int
+	UserID   int
+	Reason   string
 }

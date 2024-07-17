@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Moderator Requests</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>Moderator Requests</h1>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Reason</th>
+            <th>Action</th>
+        </tr>
+        {{range .Requests}}
+        <tr>
+            <td>{{.Username}}</td>
+            <td>{{.Reason}}</td>
+            <td>
+                <a href="/admin/approve-moderator/{{.UserID}}">Approve</a>
+                <a href="/admin/reject-moderator/{{.UserID}}">Reject</a>
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>

@@ -10,6 +10,14 @@
         <h1>Welcome, {{.Username}}!</h1>
     </header>
     <section class="profile">
+        <h2>Your Profile</h2>
+        <p><strong>Email:</strong> {{.Email}}</p>
+        <p><strong>Role:</strong> {{.Role}}</p>
+
+        {{if eq .Role "moderator"}}
+        <p><a href="/moderator/panel">Go to Moderator Panel</a></p>
+        {{end}}
+
         <h2>Your Threads</h2>
         {{if .Threads}}
             <ul>
@@ -39,6 +47,8 @@
         {{else}}
             <p>No comments found.</p>
         {{end}}
+
+        <p><a href="/logout">Logout</a></p>
     </section>
 </body>
 </html>

@@ -6,11 +6,12 @@ import (
 	"strconv"
 
 	"DytForum/database"
+	"DytForum/session"
 )
 
 // LikeThread handles HTTP requests to like or dislike a thread.
 func LikeThread(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
+	session, _ := session.Store.Get(r, "session-name")
 	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 		http.Error(w, "You must be logged in to like or dislike a thread", http.StatusUnauthorized)
 		return
@@ -99,7 +100,7 @@ func LikeThread(w http.ResponseWriter, r *http.Request) {
 
 // LikeComment handles HTTP requests to like or dislike a comment.
 func LikeComment(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "session-name")
+	session, _ := session.Store.Get(r, "session-name")
 	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 		http.Error(w, "You must be logged in to like or dislike a comment", http.StatusUnauthorized)
 		return

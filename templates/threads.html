@@ -21,6 +21,22 @@
             <img src="/{{.PicturePath}}" alt="Thread Picture">
         {{end}}
 
+        {{if eq .Thread.Approved 0}}
+        <p style="color:orange;">This thread is awaiting moderator approval</p>
+        {{else}}
+        <form method="post" action="/report-thread">
+            <input type="hidden" name="thread_id" value="{{.Thread.ID}}">
+            <label for="reason">Report reason:</label>
+            <select name="reason" id="reason" required>
+                <option value="irrelevant">Irrelevant</option>
+                <option value="obscene">Obscene</option>
+                <option value="illegal">Illegal</option>
+                <option value="offensive">Offensive</option>
+            </select>
+            <button type="submit">Report Thread</button>
+        </form>
+        {{end}}
+
         <form method="post" action="/like-dislike-thread">
             <input type="hidden" name="thread_id" value="{{ .Thread.ID }}">
             <button type="submit" name="like_status" value="1">Like</button>
