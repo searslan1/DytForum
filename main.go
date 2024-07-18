@@ -71,7 +71,6 @@ func main() {
 	admin.HandleFunc("/admin/demote-user/{id:[0-9]+}", handlers.DemoteUserHandler).Methods("GET")
 	admin.HandleFunc("/admin/create-category", handlers.CreateCategoryHandler).Methods("POST")
 	admin.HandleFunc("/admin/delete-category", handlers.DeleteCategoryHandler).Methods("POST")
-	admin.HandleFunc("/logout", handlers.AdminLogoutHandler).Methods("GET")
 
 	// Public endpoints
 	public := r.NewRoute().Subrouter()

@@ -24,3 +24,23 @@ func fetchCategories() ([]models.Category, error) {
 
 	return categories, nil
 }
+
+func fetchThreads() ([]models.Thread, error) {
+	rows, err := database.DB.Query("SELECT id, category, title, content FROM threads WHERE approved = 1")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var threads []models.Thread
+	for rows.Next() {
+		var thread models.Thread
+		err := rows.Scan(&thread.ID, &thread.Category, &thread.Title, &thread.Content)
+		if err != nil {
+			return nil, err
+		}
+		threads = append(threads, thread)
+	}
+
+	return threads, nil
+}

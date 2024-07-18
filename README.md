@@ -1,7 +1,7 @@
 # DytForum
 
 profil fotoğrafı
-admin panelinde kategori oluşturma ve silme çalışmıyor.
+
 
 DytForum
 ├── README.md

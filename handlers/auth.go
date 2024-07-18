@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
@@ -97,38 +96,30 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	category := r.URL.Query().Get("category")
-
-	var rows *sql.Rows
-	var err error
-	if category != "" {
-		rows, err = database.DB.Query("SELECT id, title, content, category FROM threads WHERE category = ?", category)
-	} else {
-		rows, err = database.DB.Query("SELECT id, title, content, category FROM threads")
-	}
+	categories, err := fetchCategories()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch categories", http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
 
-	var threads []models.Thread
-	for rows.Next() {
-		var thread models.Thread
-		err := rows.Scan(&thread.ID, &thread.Title, &thread.Content, &thread.Category)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		threads = append(threads, thread)
+	threads, err := fetchThreads()
+	if err != nil {
+		http.Error(w, "Failed to fetch threads", http.StatusInternalServerError)
+		return
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/index.html"))
-	tmpl.Execute(w, struct {
-		Threads []models.Thread
+	data := struct {
+		Categories []models.Category
+		Threads    []models.Thread
 	}{
-		Threads: threads,
-	})
+		Categories: categories,
+		Threads:    threads,
+	}
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+	}
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
