@@ -2,9 +2,10 @@
 
 profil fotoğrafı
 
-
 DytForum
 ├── README.md
+├── adminpassword
+│   └── main.go
 ├── database
 │   └── database.go
 ├── forum.db
@@ -14,6 +15,7 @@ DytForum
 │   ├── admin.go
 │   ├── auth.go
 │   ├── comments.go
+│   ├── helpers.go
 │   ├── home.go
 │   ├── like_dislike.go
 │   ├── moderator.go
@@ -45,6 +47,7 @@ DytForum
 │       ├── 30.jpg
 │       └── 31.jpg
 └── templates
+    ├── admin.html
     ├── admin_panel.html
     ├── create-comment.html
     ├── create_category.html
@@ -62,4 +65,4 @@ DytForum
     ├── secret.html
     └── threads.html
 
-10 directories, 48 files
+11 directories, 51 files
