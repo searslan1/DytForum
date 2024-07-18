@@ -84,3 +84,7 @@ type Report struct {
 	Title    string
 	Content  string
 }
+type Category struct {
+	ID   int
+	Name string
+}

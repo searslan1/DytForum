@@ -13,14 +13,14 @@
             <textarea name="content" placeholder="Thread Content" required></textarea>
             <select id="category" name="category" required>
                 <option value="" disabled selected>Select a category</option>
-                <option value="Genel">Genel</option>
-                <option value="Kilo Verme">Kilo Verme</option>
-                <option value="Kilo Alma">Kilo Alma</option>
-                <option value="Hastalıklarda Beslenme">Hastalıklarda Beslenme</option>
-                <option value="Sporda Beslenme">Sporda Beslenme</option>
+                {{range .Categories}}
+                <option value="{{.ID}}">{{.Name}}</option>
+                {{end}}
             </select>
-            <div>            <label for="picture">Upload Picture:</label>
-                <input type="file" id="picture" name="picture"><br><br></div>
+            <div>
+                <label for="picture">Upload Picture:</label>
+                <input type="file" id="picture" name="picture"><br><br>
+            </div>
             <button type="submit">Create Thread</button>
         </form>
         <a href="/profile">Profile</a> <!-- Profile link -->
@@ -32,11 +32,9 @@
             <label for="category">Filter by Category:</label>
             <select name="category" id="category">
                 <option value="">All Categories</option>
-                <option value="Genel">Genel</option>
-                <option value="Kilo Verme">Kilo Verme</option>
-                <option value="Kilo Alma">Kilo Alma</option>
-                <option value="Hastalıklarda Beslenme">Hastalıklarda Beslenme</option>
-                <option value="Sporda Beslenme">Sporda Beslenme</option>
+                {{range .Categories}}
+                <option value="{{.Name}}">{{.Name}}</option>
+                {{end}}
             </select>
             <button type="submit">Apply Filters</button>
         </form>

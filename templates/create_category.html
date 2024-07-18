@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Create Category</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>Create Category</h1>
-    <form action="/admin/create-category" method="POST">
-        <div>
-            <label for="name">Category Name:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-        <div>
-            <button type="submit">Create Category</button>
-        </div>
-    </form>
+    <section class="create-category">
+        <h1>Create Category</h1>
+        <form method="post" action="/admin/create-category">
+            <label for="category">Category Name:</label>
+            <input type="text" id="category" name="category" required>
+            <button type="submit">Create</button>
+        </form>
+    </section>
 </body>
 </html>

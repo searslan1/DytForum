@@ -4,10 +4,8 @@ package handlers
 import (
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"DytForum/database"
@@ -18,92 +16,40 @@ import (
 // CreateThreadHandler handles the creation of a new thread.
 func CreateThreadHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := session.Store.Get(r, "session-name")
-	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+	role := session.Values["role"]
+	if role != "user" && role != "moderator" {
 		http.Error(w, "You must be logged in to create a thread", http.StatusUnauthorized)
 		return
 	}
 
 	if r.Method == "GET" {
-		tmpl := template.Must(template.ParseFiles("templates/create_thread.html"))
-		tmpl.Execute(w, nil)
-	} else if r.Method == "POST" {
-		err := r.ParseMultipartForm(20 << 20) // 20 MB limit for file size
+		categories, err := fetchCategories()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to fetch categories", http.StatusInternalServerError)
 			return
 		}
 
-		for _, headers := range r.MultipartForm.File {
-			for _, header := range headers {
-				file, err := header.Open()
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer file.Close()
-
-				// Check file size
-				if header.Size > 20<<20 {
-					http.Error(w, "File size exceeds the limit", http.StatusBadRequest)
-					return
-				}
-			}
+		tmpl := template.Must(template.ParseFiles("templates/create_thread.html"))
+		data := struct {
+			Categories []models.Category
+		}{
+			Categories: categories,
 		}
-
-		category := r.FormValue("category")
+		tmpl.Execute(w, data)
+	} else if r.Method == "POST" {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
-		username := session.Values["username"].(string)
-
-		var userID int
-		err = database.DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+		categoryID, err := strconv.Atoi(r.FormValue("category"))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Invalid category ID", http.StatusBadRequest)
 			return
 		}
+		userID := session.Values["userID"].(int)
 
-		// Insert thread into database
-		result, err := database.DB.Exec("INSERT INTO threads (user_id, category, title, content) VALUES (?, ?, ?, ?)", userID, category, title, content)
+		_, err = database.DB.Exec("INSERT INTO threads (category, title, content, user_id) VALUES (?, ?, ?, ?)", categoryID, title, content, userID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to create thread", http.StatusInternalServerError)
 			return
-		}
-
-		// Get the inserted thread ID
-		threadID, err := result.LastInsertId()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// Handle file upload if there's a file
-		file, _, err := r.FormFile("picture")
-		if err == nil {
-			defer file.Close()
-
-			// Create the uploads directory if it doesn't exist
-			uploadDir := "static/uploads"
-			if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-				err = os.MkdirAll(uploadDir, 0o755)
-				if err != nil {
-					http.Error(w, "Error creating upload directory: "+err.Error(), http.StatusInternalServerError)
-					return
-				}
-			}
-
-			// Save the file
-			filePath := fmt.Sprintf("%s/%d.jpg", uploadDir, threadID) // Change the path and extension as needed
-			out, err := os.Create(filePath)
-			if err != nil {
-				http.Error(w, "Error saving picture: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer out.Close()
-			_, err = io.Copy(out, file)
-			if err != nil {
-				http.Error(w, "Error saving picture: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
 		}
 
 		http.Redirect(w, r, "/index", http.StatusSeeOther)

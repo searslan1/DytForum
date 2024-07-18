@@ -1,7 +1,7 @@
 # DytForum
 
 profil fotoğrafı
-reports moderatör panelinde görüntülenmiyor
+admin panelinde kategori oluşturma ve silme çalışmıyor.
 
 DytForum
 ├── README.md
@@ -29,6 +29,8 @@ DytForum
 │   └── auth.go
 ├── models
 │   └── models.go
+├── session
+│   └── session.go
 ├── static
 │   ├── css
 │   │   └── style.css
@@ -43,9 +45,11 @@ DytForum
 │       ├── 30.jpg
 │       └── 31.jpg
 └── templates
+    ├── admin_panel.html
     ├── create-comment.html
     ├── create_category.html
     ├── create_thread.html
+    ├── delete_category.html
     ├── home.html
     ├── index.html
     ├── like-dislike-comment.html
@@ -55,8 +59,7 @@ DytForum
     ├── moderator_request.html
     ├── profile.html
     ├── register.html
-    ├── reports.html
     ├── secret.html
     └── threads.html
 
-9 directories, 46 files
+10 directories, 48 files

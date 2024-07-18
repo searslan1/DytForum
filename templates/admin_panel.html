@@ -7,6 +7,7 @@
 </head>
 <body>
     <section class="admin-panel">
+        <a href="/logout">Logout</a>
         <h1>Admin Panel</h1>
         
         <h2>Moderator Requests</h2>
@@ -87,13 +88,17 @@
 
         <form action="/admin/delete-category" method="POST">
             <label for="delete-category">Delete Category:</label>
-            <select id="delete-category" name="category" required>
+            <select id="delete-category" name="category_id" required>
                 {{range .Categories}}
-                <option value="{{.}}">{{.}}</option>
+                <option value="{{.ID}}">{{.Name}}</option>
                 {{end}}
             </select>
             <button type="submit">Delete Category</button>
         </form>
     </section>
+    </form>
+</section>
+</body>
+</html>
 </body>
 </html>

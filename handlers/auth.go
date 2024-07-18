@@ -22,7 +22,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		isModerator := r.FormValue("moderator") == "on"
-		isAdmin := r.FormValue("admin") == "on" // Admin kaydı için
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
@@ -30,19 +29,14 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		role := "user"
-		if isAdmin {
-			role = "admin"
-		}
-
-		_, err = database.DB.Exec("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", username, email, hashedPassword, role)
+		_, err = database.DB.Exec("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'user')", username, email, hashedPassword)
 		if err != nil {
 			log.Printf("RegisterHandler: Failed to insert user: %v", err)
 			http.Error(w, "Server error, unable to create your account.", http.StatusInternalServerError)
 			return
 		}
 
-		if isModerator && !isAdmin { // Sadece kullanıcı ve moderatör kaydı için
+		if isModerator {
 			var userID int
 			err = database.DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
 			if err != nil {
@@ -154,4 +148,49 @@ func DebugSessionHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := session.Store.Get(r, "session-name")
 	log.Printf("Session values: %v", session.Values)
 	w.Write([]byte("Check server logs for session values"))
+}
+
+func AdminLoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		tmpl := template.Must(template.ParseFiles("templates/admin.html"))
+		tmpl.Execute(w, nil)
+	} else if r.Method == "POST" {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		var storedPassword string
+		err := database.DB.QueryRow("SELECT password FROM users WHERE username = ? AND role = 'admin'", username).Scan(&storedPassword)
+		if err != nil {
+			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
+		if err != nil {
+			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+			return
+		}
+
+		// Create a session to store admin role information
+		session, _ := session.Store.Get(r, "session-name")
+		session.Values["role"] = "admin"
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/admin/panel", http.StatusSeeOther)
+	}
+}
+
+func AdminLogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// Çıkış işlemleri yapılabilir (session temizleme vb.)
+	// Örneğin:
+	session, _ := session.Store.Get(r, "session-name")
+	session.Options.MaxAge = -1 // Session'ı sonlandır
+	err := session.Save(r, w)
+	if err != nil {
+		http.Error(w, "Failed to logout", http.StatusInternalServerError)
+		return
+	}
+
+	// Çıkış sonrası yönlendirme
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -38,19 +39,28 @@ func AdminPanelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	categories, err := fetchCategories()
+	if err != nil {
+		http.Error(w, "Failed to fetch categories", http.StatusInternalServerError)
+		return
+	}
+
 	tmpl := template.Must(template.ParseFiles("templates/admin_panel.html"))
 	data := struct {
 		ModeratorRequests []models.ModeratorRequest
 		Users             []models.User
 		Reports           []models.Report
+		Categories        []models.Category
 	}{
 		ModeratorRequests: moderatorRequests,
 		Users:             users,
 		Reports:           reports,
+		Categories:        categories,
 	}
 	err = tmpl.Execute(w, data)
 	if err != nil {
 		http.Error(w, "Failed to render admin panel", http.StatusInternalServerError)
+		log.Printf("Failed to render admin panel: %v", err)
 	}
 }
 
@@ -75,7 +85,7 @@ func fetchModeratorRequests() ([]models.ModeratorRequest, error) {
 }
 
 func fetchUsers() ([]models.User, error) {
-	rows, err := database.DB.Query("SELECT id, username, role FROM users")
+	rows, err := database.DB.Query("SELECT id, username, email, role FROM users")
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +94,7 @@ func fetchUsers() ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var user models.User
-		err := rows.Scan(&user.ID, &user.Username, &user.Role)
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Role)
 		if err != nil {
 			return nil, err
 		}
@@ -196,35 +206,36 @@ func RejectModeratorHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	category := r.FormValue("category")
-	if category == "" {
-		http.Error(w, "Category name cannot be empty", http.StatusBadRequest)
-		return
+	if r.Method == "POST" {
+		categoryName := r.FormValue("category")
+		_, err := database.DB.Exec("INSERT INTO categories (name) VALUES (?)", categoryName)
+		if err != nil {
+			http.Error(w, "Failed to create category", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/admin/panel", http.StatusSeeOther)
+	} else {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
-
-	_, err := database.DB.Exec("INSERT INTO categories (name) VALUES (?)", category)
-	if err != nil {
-		http.Error(w, "Failed to create category", http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/admin/panel", http.StatusSeeOther)
 }
 
 func DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	category := r.FormValue("category")
-	if category == "" {
-		http.Error(w, "Category name cannot be empty", http.StatusBadRequest)
-		return
+	if r.Method == "GET" {
+		tmpl := template.Must(template.ParseFiles("templates/delete_category.html"))
+		tmpl.Execute(w, nil)
+	} else if r.Method == "POST" {
+		categoryID, err := strconv.Atoi(r.FormValue("category_id"))
+		if err != nil {
+			http.Error(w, "Invalid category ID", http.StatusBadRequest)
+			return
+		}
+		_, err = database.DB.Exec("DELETE FROM categories WHERE id = ?", categoryID)
+		if err != nil {
+			http.Error(w, "Failed to delete category", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/admin/panel", http.StatusSeeOther)
 	}
-
-	_, err := database.DB.Exec("DELETE FROM categories WHERE name = ?", category)
-	if err != nil {
-		http.Error(w, "Failed to delete category", http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/admin/panel", http.StatusSeeOther)
 }
 
 func ListModeratorRequestsHandler(w http.ResponseWriter, r *http.Request) {

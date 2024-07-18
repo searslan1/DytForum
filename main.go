@@ -62,14 +62,16 @@ func main() {
 	// Admin endpoints
 	admin := r.NewRoute().Subrouter()
 	admin.Use(middleware.AdminMiddleware)
+	r.HandleFunc("/admin", handlers.AdminLoginHandler).Methods("GET", "POST")
 	admin.HandleFunc("/admin/panel", handlers.AdminPanelHandler).Methods("GET")
 	admin.HandleFunc("/admin/moderator-requests", handlers.ListModeratorRequestsHandler).Methods("GET")
 	admin.HandleFunc("/admin/approve-moderator/{id:[0-9]+}", handlers.ApproveModeratorHandler).Methods("GET")
 	admin.HandleFunc("/admin/reject-moderator/{id:[0-9]+}", handlers.RejectModeratorHandler).Methods("GET")
-	admin.HandleFunc("/admin/promote-user/{id:[0-9]+}", handlers.PromoteUserHandler)
-	admin.HandleFunc("/admin/demote-user/{id:[0-9]+}", handlers.DemoteUserHandler)
-	admin.HandleFunc("/admin/create-category", handlers.CreateCategoryHandler).Methods("GET", "POST")
-	admin.HandleFunc("/admin/delete-category", handlers.DeleteCategoryHandler).Methods("GET")
+	admin.HandleFunc("/admin/promote-user/{id:[0-9]+}", handlers.PromoteUserHandler).Methods("GET")
+	admin.HandleFunc("/admin/demote-user/{id:[0-9]+}", handlers.DemoteUserHandler).Methods("GET")
+	admin.HandleFunc("/admin/create-category", handlers.CreateCategoryHandler).Methods("POST")
+	admin.HandleFunc("/admin/delete-category", handlers.DeleteCategoryHandler).Methods("POST")
+	admin.HandleFunc("/logout", handlers.AdminLogoutHandler).Methods("GET")
 
 	// Public endpoints
 	public := r.NewRoute().Subrouter()
