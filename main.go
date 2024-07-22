@@ -35,6 +35,10 @@ func main() {
 	r.HandleFunc("/register", handlers.RegisterHandler).Methods("GET", "POST")
 	r.HandleFunc("/login", handlers.LoginHandler).Methods("GET", "POST")
 
+	// Like/Dislike routes
+	r.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
+	r.HandleFunc("/like-comment", handlers.LikeComment).Methods("POST")
+
 	// Moderator request route
 	r.HandleFunc("/moderator-request", handlers.ModeratorRequestHandler).Methods("GET", "POST")
 
@@ -44,8 +48,6 @@ func main() {
 	protected.HandleFunc("/profile", handlers.ProfileHandler)
 	protected.HandleFunc("/create-thread", handlers.CreateThreadHandler).Methods("GET", "POST")
 	protected.HandleFunc("/create-comment", handlers.CreateCommentHandler).Methods("POST")
-	protected.HandleFunc("/like-thread", handlers.LikeThread).Methods("POST")
-	protected.HandleFunc("/like-dislike-thread", handlers.LikeThread).Methods("POST")
 	protected.HandleFunc("/report-thread", handlers.ReportThreadHandler).Methods("POST")
 
 	// Moderator endpoints

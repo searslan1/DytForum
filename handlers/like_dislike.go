@@ -49,40 +49,31 @@ func LikeThread(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther) // Redirect back to the referring page
 			return
 		} else {
-			// User is changing their like/dislike status
-			if existingLikeStatus != 0 {
-				// Delete the previous like/dislike if it exists
-				_, err := database.DB.Exec("DELETE FROM likes WHERE thread_id = ? AND user_id = ?", threadID, userID)
-				if err != nil {
-					log.Printf("Failed to delete previous like/dislike: %v", err)
-					http.Error(w, "Failed to delete previous like/dislike", http.StatusInternalServerError)
-					return
-				}
-
-				// Update the thread's likes/dislikes count based on the previous status
-				if existingLikeStatus == 1 {
-					_, err = database.DB.Exec("UPDATE threads SET likes = likes - 1 WHERE id = ?", threadID)
-				} else {
-					_, err = database.DB.Exec("UPDATE threads SET dislikes = dislikes - 1 WHERE id = ?", threadID)
-				}
-				if err != nil {
-					log.Printf("Failed to update thread likes/dislikes: %v", err)
-					http.Error(w, "Failed to update thread likes/dislikes", http.StatusInternalServerError)
-					return
-				}
+			_, err := database.DB.Exec("DELETE FROM likes WHERE thread_id = ? AND user_id = ?", threadID, userID)
+			if err != nil {
+				log.Printf("Failed to delete previous like/dislike: %v", err)
+				http.Error(w, "Failed to delete previous like/dislike", http.StatusInternalServerError)
+				return
+			}
+			if existingLikeStatus == 1 {
+				_, err = database.DB.Exec("UPDATE threads SET likes = likes - 1 WHERE id = ?", threadID)
+			} else {
+				_, err = database.DB.Exec("UPDATE threads SET dislikes = dislikes - 1 WHERE id = ?", threadID)
+			}
+			if err != nil {
+				log.Printf("Failed to update thread likes/dislikes: %v", err)
+				http.Error(w, "Failed to update thread likes/dislikes", http.StatusInternalServerError)
+				return
 			}
 		}
 	}
 
-	// Insert new like/dislike
 	_, err = database.DB.Exec("INSERT INTO likes (thread_id, user_id, like_status) VALUES (?, ?, ?)", threadID, userID, likeStatusInt)
 	if err != nil {
 		log.Printf("Failed to create like/dislike: %v", err)
 		http.Error(w, "Failed to create like/dislike", http.StatusInternalServerError)
 		return
 	}
-
-	// Update the thread's likes/dislikes count based on the new status
 	if likeStatusInt == 1 {
 		_, err = database.DB.Exec("UPDATE threads SET likes = likes + 1 WHERE id = ?", threadID)
 	} else {
@@ -94,7 +85,6 @@ func LikeThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect back to the referring page after successful like/dislike
 	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
 
@@ -108,12 +98,12 @@ func LikeComment(w http.ResponseWriter, r *http.Request) {
 
 	userID, ok := session.Values["userID"].(int)
 	if !ok {
-		log.Println("User ID not found in session") // Added logging
+		log.Println("User ID not found in session")
 		http.Error(w, "User ID not found in session", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("User ID: %d", userID) // Added logging
+	log.Printf("User ID: %d", userID)
 
 	commentID := r.FormValue("comment_id")
 	likeStatus := r.FormValue("like_status")

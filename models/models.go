@@ -36,10 +36,11 @@ type Comment struct {
 }
 
 type Like struct {
-	ID       int
-	ThreadID int
-	UserID   int
-	Like     int
+	ID        int
+	ThreadID  int
+	CommentID int
+	UserID    int
+	Like      int
 }
 type GoogleUserInfo struct {
 	ID    string
